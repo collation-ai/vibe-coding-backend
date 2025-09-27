@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
+from typing import Optional
 import time
 from datetime import datetime
 import uuid
@@ -10,7 +10,6 @@ from lib.permissions import permission_manager
 from lib.database import db_manager
 from lib.logging import audit_logger, logger
 from schemas.requests import (
-    QueryDataRequest,
     InsertDataRequest,
     UpdateDataRequest,
     DeleteDataRequest,
@@ -20,7 +19,6 @@ from schemas.responses import (
     ErrorResponse,
     MetadataResponse,
     ErrorDetail,
-    QueryResultResponse,
     PaginationResponse,
 )
 
@@ -251,7 +249,7 @@ async def insert_data(
                 else "RETURNING *"
             )
 
-            insert_query = """
+            insert_query = f"""
                 INSERT INTO {schema}.{table} ({', '.join(columns)})
                 VALUES ({', '.join(placeholders)})
                 {returning_clause}
@@ -381,14 +379,17 @@ async def update_data(
         if not where_clauses:
             raise HTTPException(
                 status_code=400,
-                detail="WHERE clause is required for UPDATE to prevent accidental updates of all rows",
+                detail=(
+                    "WHERE clause is required for UPDATE to prevent "
+                    "accidental updates of all rows"
+                ),
             )
 
         returning_clause = (
             f"RETURNING {', '.join(request.returning)}" if request.returning else ""
         )
 
-        update_query = """
+        update_query = f"""
             UPDATE {schema}.{table}
             SET {', '.join(set_clauses)}
             WHERE {' AND '.join(where_clauses)}
@@ -510,14 +511,17 @@ async def delete_data(
         if not where_clauses:
             raise HTTPException(
                 status_code=400,
-                detail="WHERE clause is required for DELETE to prevent accidental deletion of all rows",
+                detail=(
+                    "WHERE clause is required for DELETE to prevent "
+                    "accidental deletion of all rows"
+                ),
             )
 
         returning_clause = (
             f"RETURNING {', '.join(request.returning)}" if request.returning else ""
         )
 
-        delete_query = """
+        delete_query = f"""
             DELETE FROM {schema}.{table}
             WHERE {' AND '.join(where_clauses)}
             {returning_clause}

@@ -1,7 +1,5 @@
 import asyncpg
 from typing import Optional, Dict, Any, List
-from functools import lru_cache
-import json
 from cryptography.fernet import Fernet
 from lib.config import settings
 import structlog

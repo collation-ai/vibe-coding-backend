@@ -5,15 +5,14 @@ import sys
 import os
 import json
 from http.server import BaseHTTPRequestHandler
-from urllib.parse import urlparse, parse_qs
+from urllib.parse import urlparse
 
 # Add parent directory to path
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import FastAPI app and dependencies
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-from main import app
+from fastapi.testclient import TestClient  # noqa: E402
+from main import app  # noqa: E402
 
 # Create a test client for the FastAPI app
 client = TestClient(app)
@@ -77,7 +76,7 @@ class handler(BaseHTTPRequestHandler):
         if "application/json" in content_type and body:
             try:
                 json_body = json.loads(body.decode("utf-8"))
-            except:
+            except Exception:
                 json_body = None
         else:
             json_body = None
@@ -114,7 +113,7 @@ class handler(BaseHTTPRequestHandler):
         if "application/json" in content_type and body:
             try:
                 json_body = json.loads(body.decode("utf-8"))
-            except:
+            except Exception:
                 json_body = None
         else:
             json_body = None

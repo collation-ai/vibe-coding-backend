@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional, List, Any
 import asyncio
 import time
-from datetime import datetime, date
+from datetime import datetime
 import uuid
 import re
 from lib.auth import auth_manager
@@ -28,8 +28,6 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
     """
     if not params:
         return []
-
-    from schemas.requests import QueryParameter
 
     processed_params = []
 
@@ -191,7 +189,10 @@ async def execute_raw_query(
         if not has_permission:
             raise HTTPException(
                 status_code=403,
-                detail=f"No {operation} permission on schema {schema} in database {request.database}",
+                detail=(
+                    f"No {operation} permission on schema {schema} "
+                    f"in database {request.database}"
+                ),
             )
 
         # Additional safety checks for dangerous operations

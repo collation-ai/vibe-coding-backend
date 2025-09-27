@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 from enum import Enum
 import structlog
 from lib.database import db_manager

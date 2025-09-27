@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException
 from fastapi.responses import JSONResponse
-from typing import Optional, List
+from typing import Optional
 import time
 from datetime import datetime
 import uuid
@@ -8,7 +8,7 @@ from lib.auth import auth_manager
 from lib.permissions import permission_manager
 from lib.database import db_manager
 from lib.logging import audit_logger, logger
-from schemas.requests import CreateTableRequest, AlterTableRequest, DropTableRequest
+from schemas.requests import CreateTableRequest, DropTableRequest
 from schemas.responses import (
     SuccessResponse,
     ErrorResponse,

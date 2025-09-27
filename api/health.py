@@ -1,6 +1,5 @@
 from datetime import datetime
-from fastapi import FastAPI, Response
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 from schemas.responses import HealthCheckResponse
 from lib.database import db_manager
 import structlog
