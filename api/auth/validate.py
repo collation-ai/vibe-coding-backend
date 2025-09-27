@@ -25,7 +25,9 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
 
     try:
         if not x_api_key:
-            raise HTTPException(status_code=401, detail="API key is required in X-API-Key header")
+            raise HTTPException(
+                status_code=401, detail="API key is required in X-API-Key header"
+            )
 
         # Validate the API key
         user_info = await auth_manager.validate_api_key(x_api_key)
@@ -56,7 +58,9 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
             return JSONResponse(status_code=401, content=error_response.dict())
 
         # Get user's permissions
-        permissions = await permission_manager.get_user_permissions(user_info["user_id"])
+        permissions = await permission_manager.get_user_permissions(
+            user_info["user_id"]
+        )
 
         # Log successful validation
         await audit_logger.log_operation(
@@ -115,7 +119,9 @@ async def get_permissions(x_api_key: Optional[str] = Header(None, alias="X-API-K
 
     try:
         if not x_api_key:
-            raise HTTPException(status_code=401, detail="API key is required in X-API-Key header")
+            raise HTTPException(
+                status_code=401, detail="API key is required in X-API-Key header"
+            )
 
         # Validate the API key
         user_info = await auth_manager.validate_api_key(x_api_key)
@@ -135,8 +141,12 @@ async def get_permissions(x_api_key: Optional[str] = Header(None, alias="X-API-K
             return JSONResponse(status_code=401, content=error_response.dict())
 
         # Get user's permissions
-        permissions = await permission_manager.get_user_permissions(user_info["user_id"])
-        databases = await permission_manager.get_accessible_databases(user_info["user_id"])
+        permissions = await permission_manager.get_user_permissions(
+            user_info["user_id"]
+        )
+        databases = await permission_manager.get_accessible_databases(
+            user_info["user_id"]
+        )
 
         # Log the operation
         await audit_logger.log_operation(

@@ -28,7 +28,9 @@ class DatabaseManager:
                 command_timeout=settings.max_query_time_seconds,
                 ssl="require" if "azure" in settings.master_db_url else None,
             )
-            await logger.ainfo("master_pool_created", url=settings.master_db_url.split("@")[1])
+            await logger.ainfo(
+                "master_pool_created", url=settings.master_db_url.split("@")[1]
+            )
         return self.master_pool
 
     async def get_user_database_url(self, user_id: str, database_name: str) -> str:
@@ -47,7 +49,9 @@ class DatabaseManager:
             )
 
             if not row:
-                raise ValueError(f"Database {database_name} not found for user {user_id}")
+                raise ValueError(
+                    f"Database {database_name} not found for user {user_id}"
+                )
 
             # Decrypt the connection string
             encrypted_url = row["connection_string_encrypted"]
@@ -71,7 +75,9 @@ class DatabaseManager:
                 command_timeout=settings.max_query_time_seconds,
                 ssl="require",
             )
-            await logger.ainfo("user_pool_created", user_id=user_id, database=database_name)
+            await logger.ainfo(
+                "user_pool_created", user_id=user_id, database=database_name
+            )
 
         return self.pools[pool_key]
 

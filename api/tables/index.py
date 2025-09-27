@@ -20,7 +20,9 @@ from schemas.responses import (
 app = FastAPI()
 
 
-async def verify_auth_and_permission(x_api_key: str, database: str, schema: str, operation: str):
+async def verify_auth_and_permission(
+    x_api_key: str, database: str, schema: str, operation: str
+):
     """Verify authentication and check permissions"""
     user_info = await auth_manager.validate_api_key(x_api_key)
     if not user_info:
@@ -31,7 +33,9 @@ async def verify_auth_and_permission(x_api_key: str, database: str, schema: str,
     )
 
     if not has_permission:
-        raise HTTPException(status_code=403, detail=f"No {operation} permission on schema {schema}")
+        raise HTTPException(
+            status_code=403, detail=f"No {operation} permission on schema {schema}"
+        )
 
     return user_info
 
@@ -74,12 +78,18 @@ async def create_table(
         # Add constraints if any
         for constraint in request.constraints or []:
             if constraint.type == "CHECK":
-                columns_sql.append(f"CONSTRAINT {constraint.name} CHECK ({constraint.condition})")
+                columns_sql.append(
+                    f"CONSTRAINT {constraint.name} CHECK ({constraint.condition})"
+                )
             elif constraint.type == "UNIQUE" and constraint.columns:
                 columns_sql.append(
                     f"CONSTRAINT {constraint.name} UNIQUE ({', '.join(constraint.columns)})"
                 )
-            elif constraint.type == "FOREIGN KEY" and constraint.columns and constraint.references:
+            elif (
+                constraint.type == "FOREIGN KEY"
+                and constraint.columns
+                and constraint.references
+            ):
                 columns_sql.append(
                     f"CONSTRAINT {constraint.name} FOREIGN KEY ({', '.join(constraint.columns)}) "
                     f"REFERENCES {constraint.references}"
@@ -177,7 +187,9 @@ async def create_table(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.get("/api/tables")
@@ -195,7 +207,9 @@ async def list_tables(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, database, schema, "list")
+        user_info = await verify_auth_and_permission(
+            x_api_key, database, schema, "list"
+        )
 
         # Query to list tables
         query = """
@@ -209,7 +223,9 @@ async def list_tables(
             ORDER BY table_name
         """
 
-        rows = await db_manager.execute_query(user_info["user_id"], database, query, [schema])
+        rows = await db_manager.execute_query(
+            user_info["user_id"], database, query, [schema]
+        )
 
         tables = [
             {
@@ -252,7 +268,9 @@ async def list_tables(
         await logger.aerror("list_tables_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="LIST_TABLES_ERROR", message=f"Failed to list tables: {str(e)}"),
+            error=ErrorDetail(
+                code="LIST_TABLES_ERROR", message=f"Failed to list tables: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=database,
                 schema_name=schema,
@@ -262,7 +280,9 @@ async def list_tables(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.get("/api/tables/{table}/structure")
@@ -281,7 +301,9 @@ async def get_table_structure(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, database, schema, "describe")
+        user_info = await verify_auth_and_permission(
+            x_api_key, database, schema, "describe"
+        )
 
         # Query to get table structure
         query = """
@@ -321,7 +343,9 @@ async def get_table_structure(
         )
 
         if not rows:
-            raise HTTPException(status_code=404, detail=f"Table {schema}.{table} not found")
+            raise HTTPException(
+                status_code=404, detail=f"Table {schema}.{table} not found"
+            )
 
         columns = [
             TableStructure(
@@ -386,7 +410,9 @@ async def get_table_structure(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.delete("/api/tables/{table}")
@@ -465,7 +491,9 @@ async def drop_table(
         await logger.aerror("drop_table_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="DROP_TABLE_ERROR", message=f"Failed to drop table: {str(e)}"),
+            error=ErrorDetail(
+                code="DROP_TABLE_ERROR", message=f"Failed to drop table: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=request.database,
                 schema_name=schema_name,
@@ -476,4 +504,6 @@ async def drop_table(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )

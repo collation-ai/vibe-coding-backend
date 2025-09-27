@@ -51,7 +51,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
                 # Convert to date
                 if isinstance(value, str):
                     if len(value) == 10:  # YYYY-MM-DD format
-                        processed_params.append(datetime.strptime(value, "%Y-%m-%d").date())
+                        processed_params.append(
+                            datetime.strptime(value, "%Y-%m-%d").date()
+                        )
                     else:
                         processed_params.append(datetime.fromisoformat(value).date())
                 else:
@@ -73,7 +75,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
                             datetime.fromisoformat(value.replace("Z", "+00:00"))
                         )
                     else:
-                        processed_params.append(datetime.strptime(value, "%Y-%m-%d %H:%M:%S"))
+                        processed_params.append(
+                            datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                        )
                 else:
                     processed_params.append(value)
 
@@ -85,7 +89,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
 
             elif param_type in ("bool", "boolean"):
                 if isinstance(value, str):
-                    processed_params.append(value.lower() in ("true", "1", "yes", "t", "y"))
+                    processed_params.append(
+                        value.lower() in ("true", "1", "yes", "t", "y")
+                    )
                 else:
                     processed_params.append(bool(value))
 
@@ -345,4 +351,6 @@ async def execute_raw_query(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
