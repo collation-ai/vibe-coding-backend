@@ -10,11 +10,9 @@ class MetadataResponse(BaseModel):
     execution_time_ms: Optional[int] = None
     timestamp: datetime
     request_id: str
-    
+
     class Config:
-        json_encoders = {
-            datetime: lambda v: v.isoformat()
-        }
+        json_encoders = {datetime: lambda v: v.isoformat()}
 
 
 class PaginationResponse(BaseModel):

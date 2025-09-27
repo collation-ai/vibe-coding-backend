@@ -38,7 +38,7 @@ def test_auth_in_header():
             headers={}
         )
         if response.status_code == 200:
-            print(f"  ⚠️  Unexpectedly succeeded - API key should not work in URL!")
+            print("  ⚠️  Unexpectedly succeeded - API key should not work in URL!")
         else:
             print(f"  ✅ Correctly rejected (status {response.status_code})")
     except Exception as e:
@@ -52,7 +52,7 @@ def test_auth_in_header():
             headers={}
         )
         if response.status_code == 200:
-            print(f"  ⚠️  Unexpectedly succeeded without API key!")
+            print("  ⚠️  Unexpectedly succeeded without API key!")
         elif response.status_code in [401, 403]:
             print(f"  ✅ Correctly rejected (status {response.status_code})")
         else:

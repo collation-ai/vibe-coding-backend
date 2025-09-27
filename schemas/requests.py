@@ -8,12 +8,13 @@ class ColumnDefinition(BaseModel):
     type: str = Field(..., min_length=1, max_length=100)
     constraints: Optional[List[str]] = []
     default: Optional[str] = None
-    
-    @validator('name')
+
+    @validator("name")
     def validate_name(cls, v):
         import re
-        if not re.match(r'^[a-zA-Z][a-zA-Z0-9_]{0,62}$', v):
-            raise ValueError('Invalid column name')
+
+        if not re.match(r"^[a-zA-Z][a-zA-Z0-9_]{0,62}$", v):
+            raise ValueError("Invalid column name")
         return v
 
 
@@ -64,23 +65,36 @@ class WhereCondition(BaseModel):
     column: str
     operator: str = "="  # =, !=, >, <, >=, <=, LIKE, IN, IS NULL, IS NOT NULL
     value: Any
-    
-    @validator('operator')
+
+    @validator("operator")
     def validate_operator(cls, v):
-        allowed = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'ILIKE', 'IN', 'NOT IN', 'IS NULL', 'IS NOT NULL']
+        allowed = [
+            "=",
+            "!=",
+            ">",
+            "<",
+            ">=",
+            "<=",
+            "LIKE",
+            "ILIKE",
+            "IN",
+            "NOT IN",
+            "IS NULL",
+            "IS NOT NULL",
+        ]
         if v.upper() not in allowed:
-            raise ValueError(f'Invalid operator. Must be one of: {allowed}')
+            raise ValueError(f"Invalid operator. Must be one of: {allowed}")
         return v.upper()
 
 
 class OrderBy(BaseModel):
     column: str
     direction: str = "ASC"
-    
-    @validator('direction')
+
+    @validator("direction")
     def validate_direction(cls, v):
-        if v.upper() not in ['ASC', 'DESC']:
-            raise ValueError('Direction must be ASC or DESC')
+        if v.upper() not in ["ASC", "DESC"]:
+            raise ValueError("Direction must be ASC or DESC")
         return v.upper()
 
 
@@ -119,38 +133,36 @@ class DeleteDataRequest(BaseModel):
 
 class QueryParameter(BaseModel):
     value: Any = Field(..., description="The parameter value")
-    type: str = Field(..., description="Data type: string, integer, float, boolean, date, timestamp, json")
-    
+    type: str = Field(
+        ...,
+        description="Data type: string, integer, float, boolean, date, timestamp, json",
+    )
+
     class Config:
-        extra = 'forbid'
-        json_schema_extra = {
-            "example": {
-                "value": "2024-01-01",
-                "type": "date"
-            }
-        }
+        extra = "forbid"
+        json_schema_extra = {"example": {"value": "2024-01-01", "type": "date"}}
 
 
 class RawQueryRequest(BaseModel):
     database: str = Field(..., description="Target database name", example="user_db_001")
     query: str = Field(
-        ..., 
-        max_length=50000, 
+        ...,
+        max_length=50000,
         description="SQL query with $1, $2, etc. for parameters",
-        example="SELECT * FROM users WHERE created_at > $1 AND status = $2 LIMIT $3"
+        example="SELECT * FROM users WHERE created_at > $1 AND status = $2 LIMIT $3",
     )
     params: List[QueryParameter] = Field(
-        default=[], 
+        default=[],
         description="Query parameters with required type information",
         example=[
             {"value": "2024-01-01", "type": "date"},
             {"value": "active", "type": "string"},
-            {"value": "10", "type": "integer"}
-        ]
+            {"value": "10", "type": "integer"},
+        ],
     )
     timeout_seconds: Optional[int] = Field(30, le=60, ge=1, description="Query timeout in seconds")
     read_only: bool = Field(False, description="If true, only SELECT queries are allowed")
-    
+
     class Config:
         json_schema_extra = {
             "example": {
@@ -158,24 +170,32 @@ class RawQueryRequest(BaseModel):
                 "query": "SELECT COUNT(*) FROM users WHERE created_at BETWEEN $1 AND $2",
                 "params": [
                     {"value": "2024-01-01", "type": "timestamp"},
-                    {"value": "2024-12-31 23:59:59", "type": "timestamp"}
+                    {"value": "2024-12-31 23:59:59", "type": "timestamp"},
                 ],
-                "read_only": True
+                "read_only": True,
             }
         }
-    
-    @validator('query')
+
+    @validator("query")
     def validate_query(cls, v):
         # Block dangerous operations
         blocked_keywords = [
-            'DROP DATABASE', 'CREATE DATABASE', 'ALTER DATABASE',
-            'GRANT', 'REVOKE', 'CREATE USER', 'DROP USER', 'ALTER USER',
-            'CREATE ROLE', 'DROP ROLE', 'ALTER ROLE'
+            "DROP DATABASE",
+            "CREATE DATABASE",
+            "ALTER DATABASE",
+            "GRANT",
+            "REVOKE",
+            "CREATE USER",
+            "DROP USER",
+            "ALTER USER",
+            "CREATE ROLE",
+            "DROP ROLE",
+            "ALTER ROLE",
         ]
         query_upper = v.upper()
         for keyword in blocked_keywords:
             if keyword in query_upper:
-                raise ValueError(f'Query contains blocked operation: {keyword}')
+                raise ValueError(f"Query contains blocked operation: {keyword}")
         return v
 
 
