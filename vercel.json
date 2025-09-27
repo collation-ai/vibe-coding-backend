@@ -1,26 +1,46 @@
 {
-  "buildCommand": "pip install -r requirements.txt",
-  "outputDirectory": ".",
-  "functions": {
-    "api/**/*.py": {
-      "maxDuration": 60,
-      "runtime": "python3.9"
-    }
-  },
-  "headers": [
+  "builds": [
     {
-      "source": "/api/(.*)",
-      "headers": [
-        { "key": "Access-Control-Allow-Origin", "value": "*" },
-        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,PATCH,OPTIONS" },
-        { "key": "Access-Control-Allow-Headers", "value": "X-API-Key,Content-Type,X-Database-Name" },
-        { "key": "Content-Type", "value": "application/json" }
-      ]
+      "src": "api/index.py",
+      "use": "@vercel/python",
+      "config": { 
+        "maxLambdaSize": "15mb",
+        "runtime": "python3.10"
+      }
     }
   ],
-  "rewrites": [
-    { "source": "/", "destination": "/api/health" },
-    { "source": "/docs", "destination": "/api/docs" },
-    { "source": "/openapi.json", "destination": "/api/openapi" }
+  "routes": [
+    {
+      "src": "/api/health",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/auth/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/tables/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/tables",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/data/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/query",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/api/(.*)",
+      "dest": "api/index.py"
+    },
+    {
+      "src": "/",
+      "dest": "api/index.py"
+    }
   ]
 }
