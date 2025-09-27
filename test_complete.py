@@ -388,7 +388,7 @@ async def main():
     print("VIBE CODING BACKEND - COMPLETE TEST SUITE")
     print(f"{'='*60}{Colors.END}\n")
     
-    print(f"Configuration:")
+    print("Configuration:")
     print(f"  API URL: {BASE_URL}")
     print(f"  Database: {TEST_DATABASE}")
     print(f"  Schema: {TEST_SCHEMA}")
@@ -402,8 +402,8 @@ async def main():
             await client.get(f"{BASE_URL}/api/health", timeout=2)
     except:
         print(f"{Colors.RED}❌ Server is not running at {BASE_URL}{Colors.END}")
-        print(f"\nPlease start the server first:")
-        print(f"  python main.py")
+        print("\nPlease start the server first:")
+        print("  python main.py")
         return
     
     tests = [

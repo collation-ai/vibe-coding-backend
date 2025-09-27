@@ -42,10 +42,10 @@ async def setup_example_users():
     # Grant full permissions on public schema
     await admin.grant_permission(dev_email, "dev_db", "public", "read_write")
     
-    print(f"\nDeveloper setup complete!")
+    print("\nDeveloper setup complete!")
     print(f"Email: {dev_email}")
     print(f"API Key: {api_key}")
-    print(f"Database: dev_db (read_write on public schema)")
+    print("Database: dev_db (read_write on public schema)")
     
     # Example 2: Create a read-only analyst
     print("\n" + "="*60)
@@ -66,10 +66,10 @@ async def setup_example_users():
     await admin.grant_permission(analyst_email, "analytics_db", "public", "read_only")
     await admin.grant_permission(analyst_email, "analytics_db", "reports", "read_only")
     
-    print(f"\nAnalyst setup complete!")
+    print("\nAnalyst setup complete!")
     print(f"Email: {analyst_email}")
     print(f"API Key: {analyst_key}")
-    print(f"Database: analytics_db (read_only on public and reports schemas)")
+    print("Database: analytics_db (read_only on public and reports schemas)")
     
     # Example 3: Create a multi-database user
     print("\n" + "="*60)
@@ -94,12 +94,12 @@ async def setup_example_users():
     await admin.grant_permission(multi_email, "app_db", "private", "read_only")
     await admin.grant_permission(multi_email, "reporting_db", "public", "read_only")
     
-    print(f"\nMulti-database user setup complete!")
+    print("\nMulti-database user setup complete!")
     print(f"Email: {multi_email}")
     print(f"API Key: {multi_key}")
-    print(f"Databases:")
-    print(f"  - app_db: read_write on public, read_only on private")
-    print(f"  - reporting_db: read_only on public")
+    print("Databases:")
+    print("  - app_db: read_write on public, read_only on private")
+    print("  - reporting_db: read_only on public")
     
     # Show all users and permissions
     print("\n" + "="*60)

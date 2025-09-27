@@ -22,7 +22,7 @@ async def test_auth_validate():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Authentication successful!")
+            print("✅ Authentication successful!")
             print(f"   User: {data['data']['user']['email']}")
             print(f"   Permissions: {len(data['data']['permissions'])} schema(s)")
             return True
@@ -40,7 +40,7 @@ async def test_health():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Health check passed!")
+            print("✅ Health check passed!")
             print(f"   Status: {data['status']}")
             print(f"   Database: {'Connected' if data['database'] else 'Not connected'}")
             return True
@@ -61,7 +61,7 @@ async def test_list_tables():
         
         if response.status_code == 200:
             data = response.json()
-            print(f"✅ Table listing successful!")
+            print("✅ Table listing successful!")
             print(f"   Tables found: {data['data']['count']}")
             return True
         else:
@@ -107,7 +107,7 @@ async def test_create_table():
         
         if response.status_code in [200, 201]:
             data = response.json()
-            print(f"✅ Table creation successful!")
+            print("✅ Table creation successful!")
             print(f"   Table: {data['data']['schema']}.{data['data']['table']}")
             return True
         else:

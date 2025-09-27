@@ -34,8 +34,8 @@ def test_swagger_config():
             if "application/json" in content:
                 schema_ref = content["application/json"].get("schema", {})
                 print("  ✅ Request body is properly defined")
-                if "$ref" in schema_ref:
-                    schema_name = schema_ref["$ref"].split("/")[-1]
+                if "$re" in schema_ref:
+                    schema_name = schema_ref["$re"].split("/")[-1]
                     print(f"     Schema: {schema_name}")
                     
                     # Check if schema has examples

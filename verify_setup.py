@@ -24,7 +24,7 @@ def main():
     # Check critical imports
     modules = [
         "fastapi",
-        "uvicorn", 
+        "uvicorn",
         "asyncpg",
         "pydantic",
         "cryptography",

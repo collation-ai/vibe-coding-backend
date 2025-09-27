@@ -114,7 +114,7 @@ class AdminManager:
                 """
                 INSERT INTO database_assignments (user_id, database_name, connection_string_encrypted)
                 VALUES ($1, $2, $3)
-                ON CONFLICT (user_id, database_name) 
+                ON CONFLICT (user_id, database_name)
                 DO UPDATE SET connection_string_encrypted = $3
                 """,
                 user_id, database_name, encrypted_url
@@ -271,7 +271,7 @@ class AdminManager:
                 print(f"   Schema: {schema_name}")
                 return True
             else:
-                print(f"❌ Permission not found")
+                print("❌ Permission not found")
                 return False
         finally:
             await conn.close()
@@ -289,7 +289,7 @@ class AdminManager:
                 # Also deactivate their API keys
                 await conn.execute(
                     """
-                    UPDATE api_keys SET is_active = false 
+                    UPDATE api_keys SET is_active = false
                     WHERE user_id = (SELECT id FROM users WHERE email = $1)
                     """,
                     email
@@ -418,7 +418,7 @@ async def main():
     parser.add_argument("--generate-key", metavar="EMAIL", help="Generate API key for user")
     parser.add_argument("--key-name", default="API Key", help="Name for the API key")
     parser.add_argument("--env", default="prod", choices=["dev", "prod"], help="Environment")
-    parser.add_argument("--assign-db", nargs=3, metavar=("EMAIL", "DB_NAME", "CONN_STRING"), 
+    parser.add_argument("--assign-db", nargs=3, metavar=("EMAIL", "DB_NAME", "CONN_STRING"),
                        help="Assign database to user")
     parser.add_argument("--grant", nargs=4, metavar=("EMAIL", "DB", "SCHEMA", "PERM"),
                        help="Grant permission (read_only/read_write)")

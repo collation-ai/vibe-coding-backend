@@ -21,12 +21,12 @@ async def health_check() -> HealthCheckResponse:
     except Exception as e:
         await logger.aerror("health_check_db_failed", error=str(e))
         database_healthy = False
-    
+
     return HealthCheckResponse(
         status="healthy" if database_healthy else "degraded",
         version="1.0.0",
         database=database_healthy,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.utcnow(),
     )
 
 

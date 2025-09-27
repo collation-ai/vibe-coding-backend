@@ -174,7 +174,7 @@ async def query_data_endpoint(
     - offset: Number of rows to skip
     """
     return await query_data(
-        schema, table, database, select, where, 
+        schema, table, database, select, where,
         order_by, order, limit, offset, x_api_key
     )
 

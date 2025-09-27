@@ -88,7 +88,7 @@ def test_aggregate_query():
     data = {
         "database": DATABASE,
         "query": """
-            SELECT 
+            SELECT
                 COUNT(*) as total_users,
                 COUNT(DISTINCT name) as unique_names,
                 MAX(id) as max_id,
@@ -130,11 +130,11 @@ def test_join_query():
     data = {
         "database": DATABASE,
         "query": """
-            SELECT 
+            SELECT
                 u1.name as user_name,
                 COUNT(u2.id) as similar_users
             FROM collation_storage.users u1
-            LEFT JOIN collation_storage.users u2 
+            LEFT JOIN collation_storage.users u2
                 ON u2.name LIKE CONCAT('%', SUBSTRING(u1.name FROM 1 FOR 3), '%')
                 AND u2.id != u1.id
             GROUP BY u1.id, u1.name
@@ -159,7 +159,7 @@ def test_join_query():
             return True
         else:
             print(f"❌ Failed: {response.status_code}")
-            print(f"   Note: This query requires appropriate table structure")
+            print("   Note: This query requires appropriate table structure")
             return False
     except Exception as e:
         print(f"❌ Error: {e}")
@@ -209,16 +209,16 @@ def test_complex_query():
         "database": DATABASE,
         "query": """
             WITH user_stats AS (
-                SELECT 
+                SELECT
                     COUNT(*) as total,
                     MAX(id) as max_id
                 FROM collation_storage.users
             )
-            SELECT 
+            SELECT
                 u.id,
                 u.name,
                 us.total as total_users,
-                CASE 
+                CASE
                     WHEN u.id = us.max_id THEN 'Latest'
                     ELSE 'Earlier'
                 END as user_status
