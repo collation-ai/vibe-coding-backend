@@ -1,0 +1,33 @@
+{
+  "buildCommand": "pip install -r requirements.txt",
+  "outputDirectory": ".",
+  "functions": {
+    "api/**/*.py": {
+      "maxDuration": 60,
+      "runtime": "python3.9"
+    }
+  },
+  "env": {
+    "MASTER_DB_URL": "@master_db_url",
+    "AZURE_DB_HOST": "@azure_db_host",
+    "ENCRYPTION_KEY": "@encryption_key",
+    "API_KEY_SALT": "@api_key_salt",
+    "LOG_LEVEL": "INFO"
+  },
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,POST,PUT,DELETE,PATCH,OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "X-API-Key,Content-Type,X-Database-Name" },
+        { "key": "Content-Type", "value": "application/json" }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/", "destination": "/api/health" },
+    { "source": "/docs", "destination": "/api/docs" },
+    { "source": "/openapi.json", "destination": "/api/openapi" }
+  ]
+}

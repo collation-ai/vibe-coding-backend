@@ -1,0 +1,94 @@
+name: Test
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Cache pip packages
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run linting
+      run: |
+        # Install linting tools
+        pip install flake8 black mypy
+        
+        # Run black check
+        black --check lib/ api/ schemas/
+        
+        # Run flake8
+        flake8 lib/ api/ schemas/ --max-line-length=100 --ignore=E203,W503
+    
+    - name: Set up test environment
+      run: |
+        # Create test .env file
+        cat > .env <<EOF
+        MASTER_DB_URL=postgresql://postgres:postgres@localhost:5432/test_db
+        AZURE_DB_HOST=localhost
+        AZURE_DB_PORT=5432
+        AZURE_DB_USER=postgres
+        AZURE_DB_PASSWORD=postgres
+        AZURE_DB_SSL=prefer
+        ENCRYPTION_KEY=$(python -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
+        API_KEY_SALT=$(python -c "import secrets; print(secrets.token_urlsafe(32))")
+        MAX_QUERY_TIME_SECONDS=30
+        MAX_ROWS_PER_QUERY=10000
+        DEFAULT_PAGE_SIZE=100
+        LOG_LEVEL=INFO
+        ENABLE_AUDIT_LOGS=true
+        DEV_MODE=true
+        EOF
+    
+    - name: Initialize test database
+      run: |
+        python scripts/init_db.py
+    
+    - name: Run tests
+      run: |
+        pytest tests/ -v --cov=lib --cov=api --cov-report=xml --cov-report=html
+    
+    - name: Upload coverage to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        file: ./coverage.xml
+        flags: unittests
+        name: codecov-umbrella
+        fail_ci_if_error: false
