@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, validator, ConfigDict
 from typing import Optional, List, Dict, Any, Union
 
 
@@ -137,9 +137,10 @@ class QueryParameter(BaseModel):
         description="Data type: string, integer, float, boolean, date, timestamp, json",
     )
 
-    class Config:
-        extra = "forbid"
-        json_schema_extra = {"example": {"value": "2024-01-01", "type": "date"}}
+    model_config = ConfigDict(
+        extra="forbid",
+        json_schema_extra={"example": {"value": "2024-01-01", "type": "date"}},
+    )
 
 
 class RawQueryRequest(BaseModel):
@@ -168,8 +169,8 @@ class RawQueryRequest(BaseModel):
         False, description="If true, only SELECT queries are allowed"
     )
 
-    class Config:
-        json_schema_extra = {
+    model_config = ConfigDict(
+        json_schema_extra={
             "example": {
                 "database": "minerva_pear",
                 "query": "SELECT COUNT(*) FROM users WHERE created_at BETWEEN $1 AND $2",
@@ -180,6 +181,7 @@ class RawQueryRequest(BaseModel):
                 "read_only": True,
             }
         }
+    )
 
     @validator("query")
     def validate_query(cls, v):
