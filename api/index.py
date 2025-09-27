@@ -1,15 +1,16 @@
-"""
-Vercel serverless function entry point
-Handles all API routes for Vercel deployment
-"""
+from http.server import BaseHTTPRequestHandler
 
-import sys
-import os
+class handler(BaseHTTPRequestHandler):
+    def do_GET(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write('{"message": "Hello from Vercel Python!"}'.encode())
+        return
 
-# Add parent directory to path for imports
-sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-
-from main import app
-
-# Export the FastAPI app directly for Vercel
-app = app
+    def do_POST(self):
+        self.send_response(200)
+        self.send_header('Content-type', 'application/json')
+        self.end_headers()
+        self.wfile.write('{"message": "POST request received"}'.encode())
+        return
