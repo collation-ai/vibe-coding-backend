@@ -3,7 +3,7 @@ from fastapi.responses import JSONResponse
 from typing import Optional, List, Any
 import asyncio
 import time
-from datetime import datetime, date
+from datetime import datetime
 import uuid
 import re
 from lib.auth import auth_manager
@@ -29,8 +29,6 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
     if not params:
         return []
 
-    from schemas.requests import QueryParameter
-
     processed_params = []
 
     for i, param in enumerate(params):
@@ -51,7 +49,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
                 # Convert to date
                 if isinstance(value, str):
                     if len(value) == 10:  # YYYY-MM-DD format
-                        processed_params.append(datetime.strptime(value, "%Y-%m-%d").date())
+                        processed_params.append(
+                            datetime.strptime(value, "%Y-%m-%d").date()
+                        )
                     else:
                         processed_params.append(datetime.fromisoformat(value).date())
                 else:
@@ -73,7 +73,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
                             datetime.fromisoformat(value.replace("Z", "+00:00"))
                         )
                     else:
-                        processed_params.append(datetime.strptime(value, "%Y-%m-%d %H:%M:%S"))
+                        processed_params.append(
+                            datetime.strptime(value, "%Y-%m-%d %H:%M:%S")
+                        )
                 else:
                     processed_params.append(value)
 
@@ -85,7 +87,9 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
 
             elif param_type in ("bool", "boolean"):
                 if isinstance(value, str):
-                    processed_params.append(value.lower() in ("true", "1", "yes", "t", "y"))
+                    processed_params.append(
+                        value.lower() in ("true", "1", "yes", "t", "y")
+                    )
                 else:
                     processed_params.append(bool(value))
 
@@ -185,7 +189,10 @@ async def execute_raw_query(
         if not has_permission:
             raise HTTPException(
                 status_code=403,
-                detail=f"No {operation} permission on schema {schema} in database {request.database}",
+                detail=(
+                    f"No {operation} permission on schema {schema} "
+                    f"in database {request.database}"
+                ),
             )
 
         # Additional safety checks for dangerous operations
@@ -345,4 +352,6 @@ async def execute_raw_query(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )

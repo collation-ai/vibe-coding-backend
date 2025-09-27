@@ -1,6 +1,6 @@
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
-from typing import Optional, List, Dict, Any
+from typing import Optional
 import time
 from datetime import datetime
 import uuid
@@ -10,7 +10,6 @@ from lib.permissions import permission_manager
 from lib.database import db_manager
 from lib.logging import audit_logger, logger
 from schemas.requests import (
-    QueryDataRequest,
     InsertDataRequest,
     UpdateDataRequest,
     DeleteDataRequest,
@@ -20,14 +19,15 @@ from schemas.responses import (
     ErrorResponse,
     MetadataResponse,
     ErrorDetail,
-    QueryResultResponse,
     PaginationResponse,
 )
 
 app = FastAPI()
 
 
-async def verify_auth_and_permission(x_api_key: str, database: str, schema: str, operation: str):
+async def verify_auth_and_permission(
+    x_api_key: str, database: str, schema: str, operation: str
+):
     """Verify authentication and check permissions"""
     user_info = await auth_manager.validate_api_key(x_api_key)
     if not user_info:
@@ -38,7 +38,9 @@ async def verify_auth_and_permission(x_api_key: str, database: str, schema: str,
     )
 
     if not has_permission:
-        raise HTTPException(status_code=403, detail=f"No {operation} permission on schema {schema}")
+        raise HTTPException(
+            status_code=403, detail=f"No {operation} permission on schema {schema}"
+        )
 
     return user_info
 
@@ -65,7 +67,9 @@ async def query_data(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, database, schema, "select")
+        user_info = await verify_auth_and_permission(
+            x_api_key, database, schema, "select"
+        )
 
         # Validate identifiers
         if not await db_manager.validate_identifier(schema):
@@ -95,7 +99,9 @@ async def query_data(
                 if where_clauses:
                     query_parts.append(f"WHERE {' AND '.join(where_clauses)}")
             except json.JSONDecodeError:
-                raise HTTPException(status_code=400, detail="Invalid WHERE conditions JSON")
+                raise HTTPException(
+                    status_code=400, detail="Invalid WHERE conditions JSON"
+                )
 
         # Add ORDER BY clause
         if order_by:
@@ -108,7 +114,9 @@ async def query_data(
 
         # Execute query
         query_str = " ".join(query_parts)
-        rows = await db_manager.execute_query(user_info["user_id"], database, query_str, params)
+        rows = await db_manager.execute_query(
+            user_info["user_id"], database, query_str, params
+        )
 
         # Convert rows to list of dicts
         result_rows = [dict(row) for row in rows] if rows else []
@@ -171,7 +179,9 @@ async def query_data(
         await logger.aerror("query_data_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="QUERY_ERROR", message=f"Failed to query data: {str(e)}"),
+            error=ErrorDetail(
+                code="QUERY_ERROR", message=f"Failed to query data: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=database,
                 schema_name=schema,
@@ -182,7 +192,9 @@ async def query_data(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.post("/api/data/{schema}/{table}")
@@ -201,7 +213,9 @@ async def insert_data(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, request.database, schema, "insert")
+        user_info = await verify_auth_and_permission(
+            x_api_key, request.database, schema, "insert"
+        )
 
         # Validate identifiers
         if not await db_manager.validate_identifier(schema):
@@ -220,7 +234,9 @@ async def insert_data(
         columns = list(data_list[0].keys())
         for col in columns:
             if not await db_manager.validate_identifier(col):
-                raise HTTPException(status_code=400, detail=f"Invalid column name: {col}")
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid column name: {col}"
+                )
 
         inserted_rows = []
 
@@ -228,10 +244,12 @@ async def insert_data(
             # Build INSERT query
             placeholders = [f"${i+1}" for i in range(len(columns))]
             returning_clause = (
-                f"RETURNING {', '.join(request.returning)}" if request.returning else "RETURNING *"
+                f"RETURNING {', '.join(request.returning)}"
+                if request.returning
+                else "RETURNING *"
             )
 
-            insert_query = """
+            insert_query = f"""
                 INSERT INTO {schema}.{table} ({', '.join(columns)})
                 VALUES ({', '.join(placeholders)})
                 {returning_clause}
@@ -287,7 +305,9 @@ async def insert_data(
         await logger.aerror("insert_data_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="INSERT_ERROR", message=f"Failed to insert data: {str(e)}"),
+            error=ErrorDetail(
+                code="INSERT_ERROR", message=f"Failed to insert data: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=request.database,
                 schema_name=schema,
@@ -298,7 +318,9 @@ async def insert_data(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.put("/api/data/{schema}/{table}")
@@ -317,7 +339,9 @@ async def update_data(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, request.database, schema, "update")
+        user_info = await verify_auth_and_permission(
+            x_api_key, request.database, schema, "update"
+        )
 
         # Validate identifiers
         if not await db_manager.validate_identifier(schema):
@@ -333,7 +357,9 @@ async def update_data(
         # Build SET clause
         for col, value in request.set.items():
             if not await db_manager.validate_identifier(col):
-                raise HTTPException(status_code=400, detail=f"Invalid column name: {col}")
+                raise HTTPException(
+                    status_code=400, detail=f"Invalid column name: {col}"
+                )
             param_count += 1
             set_clauses.append(f"{col} = ${param_count}")
             params.append(value)
@@ -353,12 +379,17 @@ async def update_data(
         if not where_clauses:
             raise HTTPException(
                 status_code=400,
-                detail="WHERE clause is required for UPDATE to prevent accidental updates of all rows",
+                detail=(
+                    "WHERE clause is required for UPDATE to prevent "
+                    "accidental updates of all rows"
+                ),
             )
 
-        returning_clause = f"RETURNING {', '.join(request.returning)}" if request.returning else ""
+        returning_clause = (
+            f"RETURNING {', '.join(request.returning)}" if request.returning else ""
+        )
 
-        update_query = """
+        update_query = f"""
             UPDATE {schema}.{table}
             SET {', '.join(set_clauses)}
             WHERE {' AND '.join(where_clauses)}
@@ -398,7 +429,9 @@ async def update_data(
         response = SuccessResponse(
             data={
                 "message": "Update successful",
-                "affected_rows": affected_rows if not request.returning else len(updated_rows),
+                "affected_rows": affected_rows
+                if not request.returning
+                else len(updated_rows),
                 "rows": updated_rows,
             },
             metadata=MetadataResponse(
@@ -419,7 +452,9 @@ async def update_data(
         await logger.aerror("update_data_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="UPDATE_ERROR", message=f"Failed to update data: {str(e)}"),
+            error=ErrorDetail(
+                code="UPDATE_ERROR", message=f"Failed to update data: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=request.database,
                 schema_name=schema,
@@ -430,7 +465,9 @@ async def update_data(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.delete("/api/data/{schema}/{table}")
@@ -449,7 +486,9 @@ async def delete_data(
             raise HTTPException(status_code=401, detail="API key required")
 
         # Verify auth and permissions
-        user_info = await verify_auth_and_permission(x_api_key, request.database, schema, "delete")
+        user_info = await verify_auth_and_permission(
+            x_api_key, request.database, schema, "delete"
+        )
 
         # Validate identifiers
         if not await db_manager.validate_identifier(schema):
@@ -472,12 +511,17 @@ async def delete_data(
         if not where_clauses:
             raise HTTPException(
                 status_code=400,
-                detail="WHERE clause is required for DELETE to prevent accidental deletion of all rows",
+                detail=(
+                    "WHERE clause is required for DELETE to prevent "
+                    "accidental deletion of all rows"
+                ),
             )
 
-        returning_clause = f"RETURNING {', '.join(request.returning)}" if request.returning else ""
+        returning_clause = (
+            f"RETURNING {', '.join(request.returning)}" if request.returning else ""
+        )
 
-        delete_query = """
+        delete_query = f"""
             DELETE FROM {schema}.{table}
             WHERE {' AND '.join(where_clauses)}
             {returning_clause}
@@ -516,7 +560,9 @@ async def delete_data(
         response = SuccessResponse(
             data={
                 "message": "Delete successful",
-                "affected_rows": affected_rows if not request.returning else len(deleted_rows),
+                "affected_rows": affected_rows
+                if not request.returning
+                else len(deleted_rows),
                 "rows": deleted_rows,
             },
             metadata=MetadataResponse(
@@ -537,7 +583,9 @@ async def delete_data(
         await logger.aerror("delete_data_error", error=str(e))
 
         error_response = ErrorResponse(
-            error=ErrorDetail(code="DELETE_ERROR", message=f"Failed to delete data: {str(e)}"),
+            error=ErrorDetail(
+                code="DELETE_ERROR", message=f"Failed to delete data: {str(e)}"
+            ),
             metadata=MetadataResponse(
                 database=request.database,
                 schema_name=schema,
@@ -548,4 +596,6 @@ async def delete_data(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )

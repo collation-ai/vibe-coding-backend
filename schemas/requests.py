@@ -1,6 +1,5 @@
 from pydantic import BaseModel, Field, validator
 from typing import Optional, List, Dict, Any, Union
-from enum import Enum
 
 
 class ColumnDefinition(BaseModel):
@@ -144,7 +143,9 @@ class QueryParameter(BaseModel):
 
 
 class RawQueryRequest(BaseModel):
-    database: str = Field(..., description="Target database name", example="user_db_001")
+    database: str = Field(
+        ..., description="Target database name", example="user_db_001"
+    )
     query: str = Field(
         ...,
         max_length=50000,
@@ -160,8 +161,12 @@ class RawQueryRequest(BaseModel):
             {"value": "10", "type": "integer"},
         ],
     )
-    timeout_seconds: Optional[int] = Field(30, le=60, ge=1, description="Query timeout in seconds")
-    read_only: bool = Field(False, description="If true, only SELECT queries are allowed")
+    timeout_seconds: Optional[int] = Field(
+        30, le=60, ge=1, description="Query timeout in seconds"
+    )
+    read_only: bool = Field(
+        False, description="If true, only SELECT queries are allowed"
+    )
 
     class Config:
         json_schema_extra = {

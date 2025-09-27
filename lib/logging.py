@@ -119,7 +119,9 @@ class AuditLogger:
                     "status": row["response_status"],
                     "error": row["error_message"],
                     "execution_time_ms": row["execution_time_ms"],
-                    "timestamp": row["created_at"].isoformat() if row["created_at"] else None,
+                    "timestamp": row["created_at"].isoformat()
+                    if row["created_at"]
+                    else None,
                 }
                 for row in rows
             ]

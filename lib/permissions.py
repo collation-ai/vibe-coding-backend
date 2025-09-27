@@ -1,4 +1,4 @@
-from typing import Optional, List, Dict, Any
+from typing import List, Dict, Any
 from enum import Enum
 import structlog
 from lib.database import db_manager
@@ -110,8 +110,12 @@ class PermissionManager:
                     "database": row["database_name"],
                     "schema": row["schema_name"],
                     "permission": row["permission"],
-                    "created_at": row["created_at"].isoformat() if row["created_at"] else None,
-                    "updated_at": row["updated_at"].isoformat() if row["updated_at"] else None,
+                    "created_at": row["created_at"].isoformat()
+                    if row["created_at"]
+                    else None,
+                    "updated_at": row["updated_at"].isoformat()
+                    if row["updated_at"]
+                    else None,
                 }
                 for row in rows
             ]
@@ -147,7 +151,9 @@ class PermissionManager:
             )
             return True
 
-    async def revoke_permission(self, user_id: str, database_name: str, schema_name: str) -> bool:
+    async def revoke_permission(
+        self, user_id: str, database_name: str, schema_name: str
+    ) -> bool:
         """Revoke permission for a user on a schema"""
         pool = await db_manager.get_master_pool()
         async with pool.acquire() as conn:
@@ -206,7 +212,10 @@ class PermissionManager:
                 database_name,
             )
 
-            return [{"schema": row["schema_name"], "permission": row["permission"]} for row in rows]
+            return [
+                {"schema": row["schema_name"], "permission": row["permission"]}
+                for row in rows
+            ]
 
 
 # Singleton instance
