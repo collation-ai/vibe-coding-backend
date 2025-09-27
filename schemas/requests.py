@@ -123,7 +123,7 @@ class QueryParameter(BaseModel):
     
     class Config:
         extra = 'forbid'
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "value": "2024-01-01",
                 "type": "date"
@@ -152,7 +152,7 @@ class RawQueryRequest(BaseModel):
     read_only: bool = Field(False, description="If true, only SELECT queries are allowed")
     
     class Config:
-        schema_extra = {
+        json_schema_extra = {
             "example": {
                 "database": "minerva_pear",
                 "query": "SELECT COUNT(*) FROM users WHERE created_at BETWEEN $1 AND $2",
