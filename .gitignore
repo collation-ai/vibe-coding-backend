@@ -43,9 +43,11 @@ ENV/
 *~
 .DS_Store
 
-# Vercel
-.vercel
-*.vercel.json.local
+# Azure
+*.zip
+publish-profile.xml
+.azure/
+deploy/
 
 # Database
 *.db
