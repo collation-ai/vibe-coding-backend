@@ -127,10 +127,10 @@ class DatabaseManager:
 
     async def validate_identifier(self, identifier: str) -> bool:
         """Validate that an identifier (schema/table name) is safe"""
-        # Only allow alphanumeric, underscore, and dash
+        # Only allow alphanumeric and underscore (PostgreSQL standard)
         import re
 
-        pattern = r"^[a-zA-Z][a-zA-Z0-9_-]{0,62}$"
+        pattern = r"^[a-zA-Z][a-zA-Z0-9_]{0,62}$"
         return bool(re.match(pattern, identifier))
 
     async def close_all(self):
