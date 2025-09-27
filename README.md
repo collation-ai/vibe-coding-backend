@@ -4,7 +4,7 @@ Multi-tenant PostgreSQL CRUD API server for no-code/low-code platforms like Lova
 
 ## 🎉 Project Status: **COMPLETE & READY TO USE!**
 
-All features are fully implemented and tested. The backend is ready for local testing and Vercel deployment.
+All features are fully implemented and tested. The backend is ready for local testing and Azure deployment.
 
 ## ✨ Features
 
@@ -18,7 +18,7 @@ All features are fully implemented and tested. The backend is ready for local te
 - ✅ **Multi-tenant Support** - Database and schema-level isolation
 - ✅ **Permissions System** - Read-only and read-write access control
 - ✅ **Audit Logging** - Track all operations for security
-- ✅ **Vercel Ready** - Optimized for serverless deployment
+- ✅ **Azure Ready** - Optimized for Azure App Service deployment
 
 ## 📦 Quick Start
 
@@ -26,7 +26,7 @@ All features are fully implemented and tested. The backend is ready for local te
 
 - Python 3.9+
 - PostgreSQL database on Azure
-- Node.js & npm (for Vercel CLI)
+- Azure CLI (for deployment)
 - Git
 
 ### Setup
@@ -86,31 +86,31 @@ The server will be available at:
 - 📖 **ReDoc**: http://localhost:8000/redoc
 - 📋 **OpenAPI Spec**: http://localhost:8000/openapi.json
 
-## Deployment
+## 🚀 Deployment
 
-### Deploy via GitHub (Recommended)
+### Azure App Service (Recommended)
 
-1. **Push to GitHub**
+This backend is optimized for Azure App Service, providing seamless integration with Azure PostgreSQL.
+
+#### Quick Deploy
 ```bash
-git init
-git add .
-git commit -m "Initial commit"
-git remote add origin https://github.com/YOUR_USERNAME/vibe-coding-backend.git
-git push -u origin main
+# Login to Azure
+az login
+
+# Create and deploy (first time)
+az webapp up \
+  --resource-group vibe-coding-rg \
+  --name vibe-coding-backend \
+  --runtime "PYTHON:3.11" \
+  --sku B1
 ```
 
-2. **Connect to Vercel**
-- Go to [Vercel Dashboard](https://vercel.com)
-- Click "New Project" → Import your GitHub repository
-- Configure environment variables in Vercel dashboard
-- Deploy automatically on every push
+#### GitHub Actions CI/CD
+1. Push to GitHub
+2. Set up GitHub Actions with Azure publish profile
+3. Push to main branch for automatic deployment
 
-### Direct Deployment
-```bash
-vercel --prod
-```
-
-See [README_DEPLOYMENT.md](README_DEPLOYMENT.md) for detailed deployment instructions.
+See [AZURE_DEPLOYMENT.md](./AZURE_DEPLOYMENT.md) for complete deployment instructions.
 
 ## 🧪 Testing the API
 
@@ -202,7 +202,7 @@ import requests
 
 # Configuration
 api_key = "vibe_dev_s645CftsZWQ1ZSqwNJMNzGsJV1QpYNnA"  # Your API key
-base_url = "http://localhost:8000"  # Or your Vercel URL
+base_url = "http://localhost:8000"  # Or your Azure URL
 headers = {"X-API-Key": api_key}
 
 # 1. Validate API key
@@ -450,7 +450,7 @@ vibe-coding-backend/
 │   ├── init_db.sql      # Database schema
 │   └── init_db.py       # Database initialization
 ├── requirements.txt      # Python dependencies
-├── vercel.json          # Vercel configuration
+├── startup.sh           # Azure startup script
 └── CLAUDE.md            # Detailed project documentation
 ```
 

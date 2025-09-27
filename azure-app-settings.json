@@ -1,0 +1,45 @@
+{
+  "name": "vibe-coding-backend",
+  "settings": [
+    {
+      "name": "MASTER_DB_URL",
+      "value": "@Microsoft.KeyVault(SecretUri=https://your-keyvault.vault.azure.net/secrets/master-db-url/)",
+      "slotSetting": false
+    },
+    {
+      "name": "AZURE_DB_HOST",
+      "value": "your-server.postgres.database.azure.com",
+      "slotSetting": false
+    },
+    {
+      "name": "ENCRYPTION_KEY",
+      "value": "@Microsoft.KeyVault(SecretUri=https://your-keyvault.vault.azure.net/secrets/encryption-key/)",
+      "slotSetting": false
+    },
+    {
+      "name": "API_KEY_SALT",
+      "value": "@Microsoft.KeyVault(SecretUri=https://your-keyvault.vault.azure.net/secrets/api-key-salt/)",
+      "slotSetting": false
+    },
+    {
+      "name": "SCM_DO_BUILD_DURING_DEPLOYMENT",
+      "value": "true",
+      "slotSetting": false
+    },
+    {
+      "name": "WEBSITES_PORT",
+      "value": "8000",
+      "slotSetting": false
+    },
+    {
+      "name": "WEBSITE_HEALTHCHECK_MAXPINGFAILURES",
+      "value": "10",
+      "slotSetting": false
+    },
+    {
+      "name": "PYTHON_VERSION",
+      "value": "3.11",
+      "slotSetting": false
+    }
+  ]
+}
