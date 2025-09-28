@@ -110,7 +110,7 @@ async def create_table(
         # Create indexes if specified
         for index in request.indexes or []:
             unique = "UNIQUE" if index.unique else ""
-            using_method = f"USING {index.method}" if index.method != 'btree' else ""
+            using_method = f"USING {index.method}" if index.method != "btree" else ""
             index_sql = f"""
                 CREATE {unique} INDEX IF NOT EXISTS {index.name}
                 ON {schema_name}.{request.table} ({', '.join(index.columns)})
