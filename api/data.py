@@ -1,8 +1,9 @@
 from fastapi import FastAPI, Header, HTTPException, Query
 from fastapi.responses import JSONResponse
-from typing import Optional
+from typing import Optional, Any
 import time
 from datetime import datetime
+from dateutil import parser as date_parser
 import uuid
 import json
 from lib.auth import auth_manager
@@ -23,6 +24,22 @@ from schemas.responses import (
 )
 
 app = FastAPI()
+
+
+def parse_value(value: Any) -> Any:
+    """Parse values, converting date strings to datetime objects"""
+    if isinstance(value, str):
+        # Check if it looks like a date/datetime string
+        if len(value) >= 10 and (
+            "T" in value or "-" in value[:10]
+        ):  # Simple heuristic for ISO dates
+            try:
+                # Try to parse as datetime
+                return date_parser.parse(value)
+            except (ValueError, TypeError):
+                # Not a date, return as-is
+                return value
+    return value
 
 
 async def verify_auth_and_permission(
@@ -94,7 +111,7 @@ async def query_data(
                 for col, value in where_conditions.items():
                     param_count += 1
                     where_clauses.append(f"{col} = ${param_count}")
-                    params.append(value)
+                    params.append(parse_value(value))
 
                 if where_clauses:
                     query_parts.append(f"WHERE {' AND '.join(where_clauses)}")
@@ -255,8 +272,8 @@ async def insert_data(
                 {returning_clause}
             """
 
-            # Get values in same order as columns
-            values = [record.get(col) for col in columns]
+            # Get values in same order as columns, parsing dates
+            values = [parse_value(record.get(col)) for col in columns]
 
             # Execute insert
             result = await db_manager.execute_query(
@@ -362,7 +379,7 @@ async def update_data(
                 )
             param_count += 1
             set_clauses.append(f"{col} = ${param_count}")
-            params.append(value)
+            params.append(parse_value(value))
 
         if not set_clauses:
             raise HTTPException(status_code=400, detail="No columns to update")
@@ -374,7 +391,7 @@ async def update_data(
                 for col, value in request.where.items():
                     param_count += 1
                     where_clauses.append(f"{col} = ${param_count}")
-                    params.append(value)
+                    params.append(parse_value(value))
 
         if not where_clauses:
             raise HTTPException(
@@ -506,7 +523,7 @@ async def delete_data(
             for col, value in request.where.items():
                 param_count += 1
                 where_clauses.append(f"{col} = ${param_count}")
-                params.append(value)
+                params.append(parse_value(value))
 
         if not where_clauses:
             raise HTTPException(
