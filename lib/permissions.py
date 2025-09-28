@@ -18,6 +18,19 @@ class PermissionManager:
         """Check if user has permission for an operation on a schema"""
         required_permission = self._get_required_permission(operation)
 
+        # Always allow read-only access to information_schema
+        if (
+            schema_name == "information_schema"
+            and required_permission == Permission.READ_ONLY
+        ):
+            await logger.ainfo(
+                "permission_granted_information_schema",
+                user_id=user_id,
+                database=database_name,
+                schema=schema_name,
+            )
+            return True
+
         pool = await db_manager.get_master_pool()
         async with pool.acquire() as conn:
             row = await conn.fetchrow(
@@ -105,7 +118,7 @@ class PermissionManager:
                 user_id,
             )
 
-            return [
+            permissions = [
                 {
                     "database": row["database_name"],
                     "schema": row["schema_name"],
@@ -119,6 +132,30 @@ class PermissionManager:
                 }
                 for row in rows
             ]
+
+            # Get unique databases from permissions
+            databases = list(set(p["database"] for p in permissions))
+
+            # Add information_schema read-only access for each database
+            for db in databases:
+                if not any(
+                    p["database"] == db and p["schema"] == "information_schema"
+                    for p in permissions
+                ):
+                    permissions.append(
+                        {
+                            "database": db,
+                            "schema": "information_schema",
+                            "permission": "read_only",
+                            "created_at": None,
+                            "updated_at": None,
+                        }
+                    )
+
+            # Sort by database and schema
+            permissions.sort(key=lambda x: (x["database"], x["schema"]))
+
+            return permissions
 
     async def grant_permission(
         self, user_id: str, database_name: str, schema_name: str, permission: Permission
@@ -212,10 +249,20 @@ class PermissionManager:
                 database_name,
             )
 
-            return [
+            schemas = [
                 {"schema": row["schema_name"], "permission": row["permission"]}
                 for row in rows
             ]
+
+            # Always include information_schema with read-only access
+            # Check if it's not already in the list
+            if not any(s["schema"] == "information_schema" for s in schemas):
+                schemas.append(
+                    {"schema": "information_schema", "permission": "read_only"}
+                )
+                schemas.sort(key=lambda x: x["schema"])
+
+            return schemas
 
 
 # Singleton instance
