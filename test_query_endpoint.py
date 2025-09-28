@@ -10,27 +10,28 @@ BASE_URL = "http://localhost:8000"
 API_KEY = "vibe_prod_W35LmyakTWrQ3x2Yc0DUxKLB0dQFPleZ"
 DATABASE = "minerva_pear"
 
+
 def test_simple_select():
     """Test simple SELECT query"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📊 Testing Simple SELECT Query")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = {
         "database": DATABASE,
         "query": "SELECT COUNT(*) as total FROM collation_storage.users",
         "params": [],
-        "read_only": True
+        "read_only": True,
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             print("✅ Query successful!")
@@ -44,30 +45,31 @@ def test_simple_select():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_parameterized_query():
     """Test query with parameters"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🔍 Testing Parameterized Query")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = {
         "database": DATABASE,
         "query": "SELECT id, name FROM collation_storage.users WHERE name LIKE $1 ORDER BY id DESC LIMIT $2",
         "params": ["%Test%", 5],
-        "read_only": True
+        "read_only": True,
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 200:
             result = response.json()
-            row_count = result['data']['row_count']
+            row_count = result["data"]["row_count"]
             print(f"✅ Parameterized query successful! Found {row_count} matching rows")
             if row_count > 0:
                 print(f"   First match: {result['data']['rows'][0]}")
@@ -79,12 +81,13 @@ def test_parameterized_query():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_aggregate_query():
     """Test aggregate functions"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("📈 Testing Aggregate Query")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = {
         "database": DATABASE,
         "query": """
@@ -96,20 +99,20 @@ def test_aggregate_query():
             FROM collation_storage.users
         """,
         "params": [],
-        "read_only": True
+        "read_only": True,
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 200:
             result = response.json()
-            stats = result['data']['rows'][0]
+            stats = result["data"]["rows"][0]
             print("✅ Aggregate query successful!")
             print(f"   Statistics: {json.dumps(stats, indent=6)}")
             return True
@@ -120,12 +123,13 @@ def test_aggregate_query():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_join_query():
     """Test JOIN query (if multiple tables exist)"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🔗 Testing JOIN Query")
-    print("="*60)
-    
+    print("=" * 60)
+
     # This will work if there are related tables, otherwise it's a self-join example
     data = {
         "database": DATABASE,
@@ -141,17 +145,17 @@ def test_join_query():
             LIMIT 5
         """,
         "params": [],
-        "read_only": True
+        "read_only": True,
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             print("✅ JOIN query successful!")
@@ -165,27 +169,28 @@ def test_join_query():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_read_only_protection():
     """Test that write operations fail when read_only=True"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🛡️ Testing Read-Only Protection")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = {
         "database": DATABASE,
         "query": "UPDATE collation_storage.users SET name = 'Test' WHERE id = 1",
         "params": [],
-        "read_only": True  # Should reject UPDATE
+        "read_only": True,  # Should reject UPDATE
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 400:
             print("✅ Read-only protection working! UPDATE correctly rejected")
             return True
@@ -199,12 +204,13 @@ def test_read_only_protection():
         print(f"❌ Error: {e}")
         return False
 
+
 def test_complex_query():
     """Test complex query with CTEs"""
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("🎯 Testing Complex Query with CTE")
-    print("="*60)
-    
+    print("=" * 60)
+
     data = {
         "database": DATABASE,
         "query": """
@@ -228,24 +234,26 @@ def test_complex_query():
             LIMIT 3
         """,
         "params": [],
-        "read_only": True
+        "read_only": True,
     }
-    
+
     try:
         response = httpx.post(
             f"{BASE_URL}/api/query",
             json=data,
             headers={"X-API-Key": API_KEY},
-            timeout=10.0
+            timeout=10.0,
         )
-        
+
         if response.status_code == 200:
             result = response.json()
             print("✅ Complex CTE query successful!")
-            row_count = result['data'].get('row_count', 0)
+            row_count = result["data"].get("row_count", 0)
             print(f"   Retrieved {row_count} rows")
-            if result['data']['rows']:
-                print(f"   Latest user: {result['data']['rows'][0]['name']} (ID: {result['data']['rows'][0]['id']})")
+            if result["data"]["rows"]:
+                print(
+                    f"   Latest user: {result['data']['rows'][0]['name']} (ID: {result['data']['rows'][0]['id']})"
+                )
             return True
         else:
             print(f"❌ Failed: {response.status_code}")
@@ -254,40 +262,41 @@ def test_complex_query():
         print(f"❌ Error: {e}")
         return False
 
+
 def main():
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("🧪 Testing /api/query Endpoint")
-    print("="*70)
+    print("=" * 70)
     print(f"\nDatabase: {DATABASE}")
     print(f"API Endpoint: {BASE_URL}/api/query")
-    
+
     tests = [
         ("Simple SELECT", test_simple_select),
         ("Parameterized Query", test_parameterized_query),
         ("Aggregate Functions", test_aggregate_query),
         ("JOIN Query", test_join_query),
         ("Read-Only Protection", test_read_only_protection),
-        ("Complex CTE Query", test_complex_query)
+        ("Complex CTE Query", test_complex_query),
     ]
-    
+
     results = []
     for name, test_func in tests:
         success = test_func()
         results.append((name, success))
-    
+
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("📊 Test Summary")
-    print("="*70)
-    
+    print("=" * 70)
+
     passed = sum(1 for _, success in results if success)
     total = len(results)
-    
+
     for name, success in results:
         status = "✅ PASSED" if success else "❌ FAILED"
         print(f"{status}: {name}")
-    
-    print("\n" + "="*70)
+
+    print("\n" + "=" * 70)
     if passed == total:
         print(f"✅ All tests passed! ({passed}/{total})")
         print("\nThe /api/query endpoint is fully functional with:")
@@ -297,7 +306,8 @@ def main():
         print("  - Support for JOINs, CTEs, and aggregations")
     else:
         print(f"⚠️ {passed}/{total} tests passed")
-    print("="*70 + "\n")
+    print("=" * 70 + "\n")
+
 
 if __name__ == "__main__":
     main()

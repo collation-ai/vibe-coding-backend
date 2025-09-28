@@ -8,6 +8,7 @@ import json
 
 BASE_URL = "http://localhost:8000"
 
+
 def test_swagger_config():
     """Test that Swagger is properly configured"""
     try:
@@ -15,19 +16,19 @@ def test_swagger_config():
         if response.status_code != 200:
             print(f"❌ Failed to fetch OpenAPI spec: {response.status_code}")
             return False
-        
+
         openapi = response.json()
-        
-        print("\n" + "="*70)
+
+        print("\n" + "=" * 70)
         print("🔍 Checking Swagger Configuration")
-        print("="*70 + "\n")
-        
+        print("=" * 70 + "\n")
+
         # Check create table endpoint
         create_table_path = openapi["paths"].get("/api/tables", {}).get("post", {})
-        
+
         print("📋 CREATE TABLE Endpoint (/api/tables POST):")
         print("-" * 50)
-        
+
         # Check request body
         if "requestBody" in create_table_path:
             content = create_table_path["requestBody"].get("content", {})
@@ -37,7 +38,7 @@ def test_swagger_config():
                 if "$re" in schema_ref:
                     schema_name = schema_ref["$re"].split("/")[-1]
                     print(f"     Schema: {schema_name}")
-                    
+
                     # Check if schema has examples
                     if schema_name in openapi.get("components", {}).get("schemas", {}):
                         schema_def = openapi["components"]["schemas"][schema_name]
@@ -51,7 +52,7 @@ def test_swagger_config():
                 print("  ❌ No JSON content type")
         else:
             print("  ❌ No request body defined")
-        
+
         # Check parameters
         params = create_table_path.get("parameters", [])
         print("\n  Parameters:")
@@ -60,16 +61,18 @@ def test_swagger_config():
                 name = param.get("name")
                 location = param.get("in")
                 required = param.get("required", False)
-                
+
                 # Check if x_api_key appears as a parameter
                 if name and "api" in name.lower():
                     print(f"     ⚠️  {name} in {location} (required: {required})")
-                    print("        ^ API key should NOT appear as parameter when using Security scheme")
+                    print(
+                        "        ^ API key should NOT appear as parameter when using Security scheme"
+                    )
                 else:
                     print(f"     • {name} in {location} (required: {required})")
         else:
             print("     ✅ No parameters (good - API key is in Security scheme)")
-        
+
         # Check security
         if "security" in create_table_path:
             print("\n  Security:")
@@ -77,12 +80,12 @@ def test_swagger_config():
         else:
             print("\n  Security:")
             print("     ❌ No security defined")
-        
+
         # Check other endpoints
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("📊 Checking All Endpoints for API Key Issues")
-        print("="*70 + "\n")
-        
+        print("=" * 70 + "\n")
+
         api_key_issues = []
         for path, methods in openapi.get("paths", {}).items():
             for method, details in methods.items():
@@ -91,19 +94,23 @@ def test_swagger_config():
                     for param in params:
                         if param.get("name") and "api" in param.get("name", "").lower():
                             api_key_issues.append(f"{method.upper()} {path}")
-        
+
         if api_key_issues:
-            print("⚠️  Endpoints with API key as parameter (should use Security instead):")
+            print(
+                "⚠️  Endpoints with API key as parameter (should use Security instead):"
+            )
             for issue in api_key_issues:
                 print(f"   - {issue}")
         else:
-            print("✅ No endpoints have API key as parameter - all using Security scheme correctly!")
-        
+            print(
+                "✅ No endpoints have API key as parameter - all using Security scheme correctly!"
+            )
+
         # Check security schemes
-        print("\n" + "="*70)
+        print("\n" + "=" * 70)
         print("🔐 Security Configuration")
-        print("="*70 + "\n")
-        
+        print("=" * 70 + "\n")
+
         security_schemes = openapi.get("components", {}).get("securitySchemes", {})
         if security_schemes:
             print("Security Schemes:")
@@ -115,21 +122,22 @@ def test_swagger_config():
                 print(f"    - Description: {scheme.get('description', 'N/A')}")
         else:
             print("❌ No security schemes defined")
-        
-        print("\n" + "="*70)
+
+        print("\n" + "=" * 70)
         print("✅ Swagger configuration check complete!")
         print("\n🎯 Next steps:")
         print("1. Restart the server to apply changes")
         print("2. Go to http://localhost:8000/docs")
         print("3. Use the Authorize button (no API key in individual endpoints)")
         print("4. Test the Create Table endpoint with clear request body")
-        print("="*70 + "\n")
-        
+        print("=" * 70 + "\n")
+
         return len(api_key_issues) == 0
-        
+
     except Exception as e:
         print(f"❌ Error testing Swagger config: {e}")
         return False
+
 
 if __name__ == "__main__":
     test_swagger_config()

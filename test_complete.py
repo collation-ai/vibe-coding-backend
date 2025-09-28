@@ -21,16 +21,20 @@ TEST_TABLE = f"test_table_{int(datetime.now().timestamp())}"
 
 
 class Colors:
-    GREEN = '\033[92m'
-    RED = '\033[91m'
-    YELLOW = '\033[93m'
-    BLUE = '\033[94m'
-    END = '\033[0m'
+    GREEN = "\033[92m"
+    RED = "\033[91m"
+    YELLOW = "\033[93m"
+    BLUE = "\033[94m"
+    END = "\033[0m"
 
 
 def print_test(name: str, status: bool, message: str = ""):
     icon = f"{Colors.GREEN}✅{Colors.END}" if status else f"{Colors.RED}❌{Colors.END}"
-    status_text = f"{Colors.GREEN}PASSED{Colors.END}" if status else f"{Colors.RED}FAILED{Colors.END}"
+    status_text = (
+        f"{Colors.GREEN}PASSED{Colors.END}"
+        if status
+        else f"{Colors.RED}FAILED{Colors.END}"
+    )
     print(f"{icon} {name}: {status_text}")
     if message:
         print(f"   {message}")
@@ -43,7 +47,9 @@ async def test_health():
             response = await client.get(f"{BASE_URL}/api/health")
             success = response.status_code == 200
             data = response.json()
-            print_test("Health Check", success, f"Status: {data.get('status', 'unknown')}")
+            print_test(
+                "Health Check", success, f"Status: {data.get('status', 'unknown')}"
+            )
             return success
         except Exception as e:
             print_test("Health Check", False, str(e))
@@ -55,13 +61,12 @@ async def test_auth_validate():
     async with httpx.AsyncClient() as client:
         try:
             response = await client.post(
-                f"{BASE_URL}/api/auth/validate",
-                headers={"X-API-Key": API_KEY}
+                f"{BASE_URL}/api/auth/validate", headers={"X-API-Key": API_KEY}
             )
             success = response.status_code == 200
             if success:
                 data = response.json()
-                user_email = data['data']['user']['email']
+                user_email = data["data"]["user"]["email"]
                 print_test("Auth Validation", success, f"User: {user_email}")
             else:
                 print_test("Auth Validation", False, f"Status: {response.status_code}")
@@ -80,45 +85,40 @@ async def test_create_table():
                 "schema": TEST_SCHEMA,
                 "table": TEST_TABLE,
                 "columns": [
-                    {
-                        "name": "id",
-                        "type": "SERIAL",
-                        "constraints": ["PRIMARY KEY"]
-                    },
+                    {"name": "id", "type": "SERIAL", "constraints": ["PRIMARY KEY"]},
                     {
                         "name": "name",
                         "type": "VARCHAR(100)",
-                        "constraints": ["NOT NULL"]
+                        "constraints": ["NOT NULL"],
                     },
                     {
                         "name": "email",
                         "type": "VARCHAR(255)",
-                        "constraints": ["UNIQUE"]
+                        "constraints": ["UNIQUE"],
                     },
-                    {
-                        "name": "age",
-                        "type": "INTEGER"
-                    },
-                    {
-                        "name": "created_at",
-                        "type": "TIMESTAMP",
-                        "default": "NOW()"
-                    }
+                    {"name": "age", "type": "INTEGER"},
+                    {"name": "created_at", "type": "TIMESTAMP", "default": "NOW()"},
                 ],
-                "if_not_exists": True
+                "if_not_exists": True,
             }
-            
+
             response = await client.post(
                 f"{BASE_URL}/api/tables",
                 json=table_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code in [200, 201]
             if success:
-                print_test("Create Table", success, f"Table: {TEST_SCHEMA}.{TEST_TABLE}")
+                print_test(
+                    "Create Table", success, f"Table: {TEST_SCHEMA}.{TEST_TABLE}"
+                )
             else:
-                print_test("Create Table", False, f"Status: {response.status_code}, Error: {response.text}")
+                print_test(
+                    "Create Table",
+                    False,
+                    f"Status: {response.status_code}, Error: {response.text}",
+                )
             return success
         except Exception as e:
             print_test("Create Table", False, str(e))
@@ -132,13 +132,13 @@ async def test_list_tables():
             response = await client.get(
                 f"{BASE_URL}/api/tables",
                 params={"database": TEST_DATABASE, "schema": TEST_SCHEMA},
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 data = response.json()
-                table_count = data['data']['count']
+                table_count = data["data"]["count"]
                 print_test("List Tables", success, f"Found {table_count} tables")
             else:
                 print_test("List Tables", False, f"Status: {response.status_code}")
@@ -157,27 +157,29 @@ async def test_insert_data():
                 "database": TEST_DATABASE,
                 "schema": TEST_SCHEMA,
                 "table": TEST_TABLE,
-                "data": {
-                    "name": "John Doe",
-                    "email": "john@example.com",
-                    "age": 30
-                },
-                "returning": ["id", "name", "created_at"]
+                "data": {"name": "John Doe", "email": "john@example.com", "age": 30},
+                "returning": ["id", "name", "created_at"],
             }
-            
+
             response = await client.post(
                 f"{BASE_URL}/api/data/{TEST_SCHEMA}/{TEST_TABLE}",
                 json=insert_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code in [200, 201]
             if success:
                 data = response.json()
-                print_test("Insert Single Record", success, f"Inserted {data['data']['inserted']} record")
+                print_test(
+                    "Insert Single Record",
+                    success,
+                    f"Inserted {data['data']['inserted']} record",
+                )
             else:
-                print_test("Insert Single Record", False, f"Status: {response.status_code}")
-            
+                print_test(
+                    "Insert Single Record", False, f"Status: {response.status_code}"
+                )
+
             # Insert multiple records
             bulk_insert = {
                 "database": TEST_DATABASE,
@@ -186,23 +188,29 @@ async def test_insert_data():
                 "data": [
                     {"name": "Jane Smith", "email": "jane@example.com", "age": 25},
                     {"name": "Bob Johnson", "email": "bob@example.com", "age": 35},
-                    {"name": "Alice Brown", "email": "alice@example.com", "age": 28}
-                ]
+                    {"name": "Alice Brown", "email": "alice@example.com", "age": 28},
+                ],
             }
-            
+
             response = await client.post(
                 f"{BASE_URL}/api/data/{TEST_SCHEMA}/{TEST_TABLE}",
                 json=bulk_insert,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             bulk_success = response.status_code in [200, 201]
             if bulk_success:
                 data = response.json()
-                print_test("Insert Bulk Records", bulk_success, f"Inserted {data['data']['inserted']} records")
+                print_test(
+                    "Insert Bulk Records",
+                    bulk_success,
+                    f"Inserted {data['data']['inserted']} records",
+                )
             else:
-                print_test("Insert Bulk Records", False, f"Status: {response.status_code}")
-            
+                print_test(
+                    "Insert Bulk Records", False, f"Status: {response.status_code}"
+                )
+
             return success and bulk_success
         except Exception as e:
             print_test("Insert Data", False, str(e))
@@ -216,22 +224,18 @@ async def test_query_data():
             # Simple query
             response = await client.get(
                 f"{BASE_URL}/api/data/{TEST_SCHEMA}/{TEST_TABLE}",
-                params={
-                    "database": TEST_DATABASE,
-                    "limit": 10,
-                    "offset": 0
-                },
-                headers={"X-API-Key": API_KEY}
+                params={"database": TEST_DATABASE, "limit": 10, "offset": 0},
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 data = response.json()
-                row_count = data['data']['row_count']
+                row_count = data["data"]["row_count"]
                 print_test("Query All Data", success, f"Retrieved {row_count} rows")
             else:
                 print_test("Query All Data", False, f"Status: {response.status_code}")
-            
+
             # Query with filter
             where_conditions = json.dumps({"age": 30})
             response = await client.get(
@@ -239,19 +243,25 @@ async def test_query_data():
                 params={
                     "database": TEST_DATABASE,
                     "where": where_conditions,
-                    "select": "id,name,email,age"
+                    "select": "id,name,email,age",
                 },
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             filter_success = response.status_code == 200
             if filter_success:
                 data = response.json()
-                row_count = data['data']['row_count']
-                print_test("Query With Filter", filter_success, f"Found {row_count} matching rows")
+                row_count = data["data"]["row_count"]
+                print_test(
+                    "Query With Filter",
+                    filter_success,
+                    f"Found {row_count} matching rows",
+                )
             else:
-                print_test("Query With Filter", False, f"Status: {response.status_code}")
-            
+                print_test(
+                    "Query With Filter", False, f"Status: {response.status_code}"
+                )
+
             return success and filter_success
         except Exception as e:
             print_test("Query Data", False, str(e))
@@ -267,19 +277,19 @@ async def test_update_data():
                 "schema": TEST_SCHEMA,
                 "table": TEST_TABLE,
                 "set": {"age": 31},
-                "where": {"name": "John Doe"}
+                "where": {"name": "John Doe"},
             }
-            
+
             response = await client.put(
                 f"{BASE_URL}/api/data/{TEST_SCHEMA}/{TEST_TABLE}",
                 json=update_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 data = response.json()
-                affected = data['data'].get('affected_rows', 0)
+                affected = data["data"].get("affected_rows", 0)
                 print_test("Update Data", success, f"Updated {affected} rows")
             else:
                 print_test("Update Data", False, f"Status: {response.status_code}")
@@ -297,23 +307,25 @@ async def test_raw_query():
                 "database": TEST_DATABASE,
                 "query": f"SELECT COUNT(*) as total, AVG(age) as avg_age FROM {TEST_SCHEMA}.{TEST_TABLE}",
                 "params": [],
-                "read_only": True
+                "read_only": True,
             }
-            
+
             response = await client.post(
                 f"{BASE_URL}/api/query",
                 json=query_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 data = response.json()
-                rows = data['data']['rows']
+                rows = data["data"]["rows"]
                 if rows:
-                    total = rows[0]['total']
-                    avg_age = rows[0]['avg_age']
-                    print_test("Raw Query", success, f"Total: {total}, Avg Age: {avg_age}")
+                    total = rows[0]["total"]
+                    avg_age = rows[0]["avg_age"]
+                    print_test(
+                        "Raw Query", success, f"Total: {total}, Avg Age: {avg_age}"
+                    )
                 else:
                     print_test("Raw Query", success, "Query executed")
             else:
@@ -333,19 +345,19 @@ async def test_delete_data():
                 "schema": TEST_SCHEMA,
                 "table": TEST_TABLE,
                 "where": {"name": "Bob Johnson"},
-                "returning": ["id", "name"]
+                "returning": ["id", "name"],
             }
-            
+
             response = await client.delete(
                 f"{BASE_URL}/api/data/{TEST_SCHEMA}/{TEST_TABLE}",
                 json=delete_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 data = response.json()
-                affected = data['data'].get('affected_rows', 0)
+                affected = data["data"].get("affected_rows", 0)
                 print_test("Delete Data", success, f"Deleted {affected} rows")
             else:
                 print_test("Delete Data", False, f"Status: {response.status_code}")
@@ -363,15 +375,15 @@ async def test_drop_table():
                 "database": TEST_DATABASE,
                 "schema": TEST_SCHEMA,
                 "table": TEST_TABLE,
-                "if_exists": True
+                "if_exists": True,
             }
-            
+
             response = await client.delete(
                 f"{BASE_URL}/api/tables/{TEST_TABLE}",
                 json=drop_request,
-                headers={"X-API-Key": API_KEY}
+                headers={"X-API-Key": API_KEY},
             )
-            
+
             success = response.status_code == 200
             if success:
                 print_test("Drop Table", success, f"Dropped table {TEST_TABLE}")
@@ -387,7 +399,7 @@ async def main():
     print(f"\n{Colors.BLUE}{'='*60}")
     print("VIBE CODING BACKEND - COMPLETE TEST SUITE")
     print(f"{'='*60}{Colors.END}\n")
-    
+
     print("Configuration:")
     print(f"  API URL: {BASE_URL}")
     print(f"  Database: {TEST_DATABASE}")
@@ -395,7 +407,7 @@ async def main():
     print(f"  Test Table: {TEST_TABLE}")
     print(f"  API Key: {API_KEY[:20]}...")
     print()
-    
+
     # Check if server is running
     try:
         async with httpx.AsyncClient() as client:
@@ -405,7 +417,7 @@ async def main():
         print("\nPlease start the server first:")
         print("  python main.py")
         return
-    
+
     tests = [
         ("System Health", test_health),
         ("Authentication", test_auth_validate),
@@ -418,34 +430,40 @@ async def main():
         ("Delete Data", test_delete_data),
         ("Drop Table", test_drop_table),
     ]
-    
+
     print(f"{Colors.YELLOW}Running tests...{Colors.END}\n")
-    
+
     results = []
     for name, test_func in tests:
         result = await test_func()
         results.append((name, result))
         await asyncio.sleep(0.1)  # Small delay between tests
-    
+
     # Summary
     print(f"\n{Colors.BLUE}{'='*60}")
     print("TEST SUMMARY")
     print(f"{'='*60}{Colors.END}\n")
-    
+
     passed = sum(1 for _, result in results if result)
     total = len(results)
-    
+
     for name, result in results:
-        status = f"{Colors.GREEN}PASSED{Colors.END}" if result else f"{Colors.RED}FAILED{Colors.END}"
+        status = (
+            f"{Colors.GREEN}PASSED{Colors.END}"
+            if result
+            else f"{Colors.RED}FAILED{Colors.END}"
+        )
         print(f"  {name}: {status}")
-    
+
     print(f"\n{Colors.BLUE}{'='*60}{Colors.END}")
-    
+
     if passed == total:
         print(f"{Colors.GREEN}✅ ALL TESTS PASSED! ({passed}/{total}){Colors.END}")
     else:
-        print(f"{Colors.YELLOW}⚠️  Some tests failed: {passed}/{total} passed{Colors.END}")
-    
+        print(
+            f"{Colors.YELLOW}⚠️  Some tests failed: {passed}/{total} passed{Colors.END}"
+        )
+
     print(f"{Colors.BLUE}{'='*60}{Colors.END}\n")
 
 
@@ -453,5 +471,5 @@ if __name__ == "__main__":
     # Check if database name is provided as argument
     if len(sys.argv) > 1:
         TEST_DATABASE = sys.argv[1]
-    
+
     asyncio.run(main())
