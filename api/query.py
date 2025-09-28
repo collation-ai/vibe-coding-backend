@@ -120,10 +120,17 @@ def process_query_params(params: Optional[List[Any]]) -> List[Any]:
 def extract_schema_from_query(query: str) -> Optional[str]:
     """Extract schema name from SQL query"""
     # Look for schema.table patterns
-    pattern = r"(?:FROM|JOIN|INTO|UPDATE|TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\."
-    match = re.search(pattern, query, re.IGNORECASE)
-    if match:
-        return match.group(1)
+    # Handle CREATE TABLE [IF NOT EXISTS] schema.table
+    patterns = [
+        r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\.",
+        r"(?:FROM|JOIN|INTO|UPDATE|DELETE\s+FROM|INSERT\s+INTO|DROP\s+TABLE|ALTER\s+TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\.",
+        r"(?:TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\.",
+    ]
+
+    for pattern in patterns:
+        match = re.search(pattern, query, re.IGNORECASE)
+        if match:
+            return match.group(1)
 
     # Default to public schema if no schema specified
     return "public"
