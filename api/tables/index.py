@@ -96,7 +96,7 @@ async def create_table(
                 )
 
         if_not_exists = "IF NOT EXISTS" if request.if_not_exists else ""
-        create_sql = """
+        create_sql = f"""
             CREATE TABLE {if_not_exists} {schema_name}.{request.table} (
                 {', '.join(columns_sql)}
             )
@@ -110,10 +110,11 @@ async def create_table(
         # Create indexes if specified
         for index in request.indexes or []:
             unique = "UNIQUE" if index.unique else ""
-            index_sql = """
+            using_method = f"USING {index.method}" if index.method != "btree" else ""
+            index_sql = f"""
                 CREATE {unique} INDEX IF NOT EXISTS {index.name}
                 ON {schema_name}.{request.table} ({', '.join(index.columns)})
-                {f'USING {index.method}' if index.method != 'btree' else ''}
+                {using_method}
             """
             await db_manager.execute_query(
                 user_info["user_id"], request.database, index_sql, fetch=False

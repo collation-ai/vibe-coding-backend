@@ -1,0 +1,17 @@
+<step title="Incoming Request" date="2025-09-28T10:20:34.441" instance="91cd92" url="/api/zipdeploy?isAsync=true" method="POST" type="request" pid="770,1,7" Accept="*/*" Host="vibe-coding-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.53.0" Accept-Encoding="gzip, deflate" Authorization="Bas..." Cache-Control="no-cache" Content-Type="application/octet-stream" Content-Length="68515" x-ms-client-request-id="c32e1568-9c54-11f0-8017-14755bf7ada9" X-ARR-LOG-ID="c32e1568-9c54-11f0-8017-14755bf7ada9" CLIENT-IP="32.216.183.114:61841" X-SITE-DEPLOYMENT-ID="vibe-coding-backend" WAS-DEFAULT-HOSTNAME="vibe-coding-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/zipdeploy?isAsync=true" X-Client-IP="32.216.183.114" X-Client-Port="61841" >
+  <step title="ZipPushDeploy" date="2025-09-28T10:20:35.726" >
+    <step title="ZipDeploy. Extract zip." date="2025-09-28T10:20:35.746" /><!-- duration: 10ms -->
+    <step title="None repository commit" date="2025-09-28T10:20:35.767" >
+      <step title="Commit id: 9184c200-90a1-497f-9978-eafc434f8fce" date="2025-09-28T10:20:35.775" Message="N/A" AuthorName="N/A" AuthorEmail="N/A" /><!-- duration: 3ms -->
+    </step><!-- duration: 19ms -->
+    <step title="Starting PushDeployAsync" date="2025-09-28T10:20:35.789" /><!-- duration: 9ms -->
+    <step title="Writing artifact to /tmp/zipdeploy/9275abe4-24ff-4c4e-8e53-e86c6f9ce1c6.zip" date="2025-09-28T10:20:35.837" >
+      <step title="Writing multipart request body to /tmp/zipdeploy/9275abe4-24ff-4c4e-8e53-e86c6f9ce1c6.zip" date="2025-09-28T10:20:35.848" /><!-- duration: 20ms -->
+    </step><!-- duration: 112ms -->
+    <step title="Start deployment in the background" date="2025-09-28T10:20:35.988" >
+      <step title="Acquiring Deployment Lock" date="2025-09-28T10:20:36.029" /><!-- duration: 10ms -->
+      <step title="Acquired Deployment Lock" date="2025-09-28T10:20:36.170" /><!-- duration: 8ms -->
+    </step><!-- duration: 341ms -->
+  </step><!-- duration: 625ms -->
+  <step title="Outgoing response" date="2025-09-28T10:20:36.398" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 4ms -->
+</step><!-- duration: 1969ms -->
