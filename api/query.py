@@ -123,7 +123,10 @@ def extract_schema_from_query(query: str) -> Optional[str]:
     # Handle CREATE TABLE [IF NOT EXISTS] schema.table
     patterns = [
         r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-zA-Z_][a-zA-Z0-9_]*)\.",
-        r"(?:FROM|JOIN|INTO|UPDATE|DELETE\s+FROM|INSERT\s+INTO|DROP\s+TABLE|ALTER\s+TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\.",
+        (
+            r"(?:FROM|JOIN|INTO|UPDATE|DELETE\s+FROM|INSERT\s+INTO|DROP\s+TABLE|"
+            r"ALTER\s+TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\."
+        ),
         r"(?:TABLE)\s+([a-zA-Z_][a-zA-Z0-9_]*)\.",
     ]
 

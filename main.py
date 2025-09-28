@@ -9,14 +9,12 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, Request, Header, Depends, Security
+from fastapi import FastAPI, Request, Security
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import APIKeyHeader
 from typing import Optional, Annotated
-import time
-from datetime import datetime
 import uuid
 
 # Import all endpoint modules
@@ -33,15 +31,7 @@ from api.auth.validate import validate_api_key, get_permissions
 from api.query import execute_raw_query
 
 # Import request/response schemas
-from schemas.requests import (
-    CreateTableRequest,
-    DropTableRequest,
-    InsertDataRequest,
-    UpdateDataRequest,
-    DeleteDataRequest,
-    RawQueryRequest,
-)
-from schemas.responses import SuccessResponse, ErrorResponse
+from schemas.requests import RawQueryRequest
 
 # Create FastAPI app
 app = FastAPI(

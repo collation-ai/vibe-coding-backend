@@ -13,12 +13,7 @@ load_dotenv()
 print("Checking environment variables...")
 print("=" * 50)
 
-required_vars = [
-    "MASTER_DB_URL",
-    "AZURE_DB_HOST", 
-    "ENCRYPTION_KEY",
-    "API_KEY_SALT"
-]
+required_vars = ["MASTER_DB_URL", "AZURE_DB_HOST", "ENCRYPTION_KEY", "API_KEY_SALT"]
 
 missing = []
 found = []
@@ -47,7 +42,7 @@ if missing:
     sys.exit(1)
 else:
     print(f"\n✅ All {len(found)} required environment variables are set!")
-    
+
     # Test database URL format
     db_url = os.getenv("MASTER_DB_URL")
     if db_url:
@@ -55,10 +50,10 @@ else:
             print("✓ Database URL format looks correct")
         else:
             print("⚠ Database URL should start with postgresql:// or postgres://")
-            
+
         if "sslmode=require" in db_url:
             print("✓ SSL mode is set (required for Azure)")
         else:
             print("⚠ Consider adding ?sslmode=require to the URL for Azure PostgreSQL")
-    
+
     sys.exit(0)

@@ -8,6 +8,7 @@ import json
 
 BASE_URL = "http://localhost:8000"
 
+
 def test_openapi():
     """Test that OpenAPI spec contains all endpoints"""
     try:
@@ -15,9 +16,9 @@ def test_openapi():
         if response.status_code != 200:
             print(f"❌ Failed to fetch OpenAPI spec: {response.status_code}")
             return False
-        
+
         openapi = response.json()
-        
+
         # Expected endpoints
         expected_endpoints = [
             ("/api/health", ["get"]),
@@ -27,30 +28,32 @@ def test_openapi():
             ("/api/tables/{table}/structure", ["get"]),
             ("/api/tables/{table}", ["delete"]),
             ("/api/data/{schema}/{table}", ["get", "post", "put", "delete"]),
-            ("/api/query", ["post"])
+            ("/api/query", ["post"]),
         ]
-        
-        print("\n" + "="*60)
+
+        print("\n" + "=" * 60)
         print("📋 Checking OpenAPI Endpoints")
-        print("="*60 + "\n")
-        
+        print("=" * 60 + "\n")
+
         # Check for security schemes (for Authorize button)
         has_auth = False
         if "components" in openapi and "securitySchemes" in openapi["components"]:
             if "APIKeyHeader" in openapi["components"]["securitySchemes"]:
                 has_auth = True
-                print("✅ API Key authentication configured (Authorize button available)")
+                print(
+                    "✅ API Key authentication configured (Authorize button available)"
+                )
             else:
                 print("❌ API Key authentication not configured")
         else:
             print("❌ No security schemes defined")
-        
+
         print("\n📍 Endpoints found in OpenAPI spec:\n")
-        
+
         # Check each endpoint
         paths = openapi.get("paths", {})
         missing = []
-        
+
         for path, methods in expected_endpoints:
             if path in paths:
                 available_methods = list(paths[path].keys())
@@ -64,19 +67,19 @@ def test_openapi():
                 print(f"  ❌ {path} - Endpoint missing entirely")
                 for method in methods:
                     missing.append(f"{method.upper()} {path}")
-        
+
         # Show summary
-        print("\n" + "="*60)
+        print("\n" + "=" * 60)
         total_paths = len(paths)
         print(f"📊 Total endpoints in spec: {total_paths}")
-        
+
         if missing:
             print(f"\n⚠️  Missing endpoints: {len(missing)}")
             for m in missing:
                 print(f"   - {m}")
         else:
             print("\n✅ All expected endpoints are available!")
-        
+
         # Show all available paths for reference
         if len(paths) > len(expected_endpoints):
             print("\n📌 Additional endpoints found:")
@@ -84,14 +87,15 @@ def test_openapi():
                 if not any(path == ep[0] for ep in expected_endpoints):
                     methods = ", ".join(paths[path].keys()).upper()
                     print(f"   - {methods} {path}")
-        
-        print("="*60)
-        
+
+        print("=" * 60)
+
         return len(missing) == 0 and has_auth
-        
+
     except Exception as e:
         print(f"❌ Error testing OpenAPI: {e}")
         return False
+
 
 def test_swagger_ui():
     """Test that Swagger UI is accessible"""
@@ -107,19 +111,22 @@ def test_swagger_ui():
         print(f"\n❌ Error accessing Swagger UI: {e}")
         return False
 
+
 if __name__ == "__main__":
     print("\n🔍 Testing Vibe Coding Backend Endpoints\n")
-    
+
     # Test OpenAPI spec
     openapi_ok = test_openapi()
-    
+
     # Test Swagger UI
     swagger_ok = test_swagger_ui()
-    
+
     # Final result
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     if openapi_ok and swagger_ok:
-        print("✅ SUCCESS: All endpoints are available and Swagger is properly configured!")
+        print(
+            "✅ SUCCESS: All endpoints are available and Swagger is properly configured!"
+        )
         print("\n🎯 Next steps:")
         print("1. Restart your server: python3 run_local.py")
         print("2. Open http://localhost:8000/docs")
@@ -130,4 +137,4 @@ if __name__ == "__main__":
         print("⚠️  Some issues found. Please restart the server with:")
         print("   1. Stop current server (Ctrl+C)")
         print("   2. Run: python3 run_local.py")
-    print("="*60 + "\n")
+    print("=" * 60 + "\n")
