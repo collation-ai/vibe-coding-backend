@@ -1,0 +1,75 @@
+const { deleteSession } = require('../shared/sessions');
+const { logApiCall } = require('../shared/database');
+
+module.exports = async function (context, req) {
+    context.log('Logout endpoint called');
+    
+    // Set CORS headers
+    context.res = {
+        headers: {
+            'Access-Control-Allow-Origin': '*',
+            'Access-Control-Allow-Methods': 'POST, OPTIONS',
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Credentials': 'true'
+        }
+    };
+    
+    // Handle preflight
+    if (req.method === 'OPTIONS') {
+        context.res.status = 204;
+        return;
+    }
+    
+    try {
+        // Get session from cookie
+        const cookies = parseCookies(req.headers.cookie || '');
+        const sessionId = cookies.vibe_session;
+        
+        if (sessionId) {
+            // Delete the session
+            await deleteSession(sessionId);
+        }
+        
+        // Clear the cookie
+        context.res.cookies = [{
+            name: "vibe_session",
+            value: "",
+            httpOnly: true,
+            secure: true,
+            sameSite: "None",
+            maxAge: 0,
+            path: "/"
+        }];
+        
+        context.res.status = 200;
+        context.res.body = {
+            success: true,
+            message: 'Logged out successfully'
+        };
+        
+        await logApiCall(null, '/api/logout', 'POST', 200);
+        
+    } catch (error) {
+        context.log.error('Logout error:', error);
+        context.res.status = 500;
+        context.res.body = {
+            success: false,
+            error: 'Internal server error'
+        };
+        await logApiCall(null, '/api/logout', 'POST', 500, error.message);
+    }
+};
+
+function parseCookies(cookieStr) {
+    const cookies = {};
+    if (!cookieStr) return cookies;
+    
+    cookieStr.split(';').forEach(cookie => {
+        const parts = cookie.trim().split('=');
+        if (parts.length === 2) {
+            cookies[parts[0]] = parts[1];
+        }
+    });
+    
+    return cookies;
+}
