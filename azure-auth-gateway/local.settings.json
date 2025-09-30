@@ -1,0 +1,16 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "MASTER_DB_URL": "your_master_db_connection_string",
+    "VIBE_BACKEND_URL": "https://vibe-coding-backend.azurewebsites.net",
+    "VIBE_REAL_API_KEY": "your_real_api_key",
+    "AZURE_STORAGE_CONNECTION": "your_storage_connection_string",
+    "JWT_SECRET": "your_jwt_secret_key",
+    "SESSION_TIMEOUT_MINUTES": "60"
+  },
+  "Host": {
+    "CORS": "*"
+  }
+}
