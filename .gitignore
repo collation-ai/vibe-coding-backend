@@ -104,3 +104,19 @@ logs/
 
 # Claude
 .claude/
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json.backup
+.npm/
+
+# Azure Functions
+azure-auth-gateway/node_modules/
+azure-auth-gateway/.funcignore
+azure-auth-gateway/local.settings.json
+azure-auth-gateway/bin/
+azure-auth-gateway/obj/
+.func/
