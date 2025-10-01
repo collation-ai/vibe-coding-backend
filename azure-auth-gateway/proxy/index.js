@@ -69,7 +69,8 @@ module.exports = async function (context, req) {
         const permissions = await getUserPermissions(userId);
         
         // Build the backend URL
-        const backendUrl = `${process.env.VIBE_BACKEND_URL}/api/${req.params.path || ''}`;
+        // The path already includes /api/ from the backend, so we just append the path
+        const backendUrl = `${process.env.VIBE_BACKEND_URL}/${req.params.path || ''}`;
         const queryString = req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '';
         const fullUrl = backendUrl + queryString;
         
