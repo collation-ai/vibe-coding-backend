@@ -35,12 +35,12 @@ echo "Creating deployment package..."
 
 # Create a temporary copy without local.settings.json
 mkdir -p temp_deploy
-cp -r login logout proxy shared *.js *.json temp_deploy/
+cp -r login logout proxy shared *.js *.json node_modules temp_deploy/
 rm -f temp_deploy/local.settings.json
 
 # Create zip file
 cd temp_deploy
-zip -r ../deploy.zip . -x "node_modules/*" "local.settings.json" "test-*.js" "setup-*.js"
+zip -r ../deploy.zip . -x "local.settings.json" "test-*.js" "setup-*.js" "check-user.js"
 cd ..
 
 # Deploy to Azure
