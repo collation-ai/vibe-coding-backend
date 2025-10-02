@@ -10,6 +10,7 @@ from pathlib import Path
 
 # Load real environment variables from .env
 from dotenv import load_dotenv
+
 env_file = Path(".env")
 if env_file.exists():
     print(f"Loading REAL environment from {env_file}")
@@ -23,13 +24,13 @@ if "azure.com" not in os.environ.get("MASTER_DB_URL", ""):
     print("ERROR: Not using real Azure database!")
     sys.exit(1)
 
-print("="*60)
+print("=" * 60)
 print("Starting LOCAL server with REAL DATABASE")
-print("="*60)
+print("=" * 60)
 print(f"Database: {os.environ['MASTER_DB_URL'].split('@')[1].split('/')[0]}")
 print(f"Encryption: {'SET' if os.environ.get('ENCRYPTION_KEY') else 'NOT SET'}")
 print(f"API Salt: {'SET' if os.environ.get('API_KEY_SALT') else 'NOT SET'}")
-print("="*60)
+print("=" * 60)
 
 # Now import and run the FastAPI app
 import uvicorn
@@ -62,6 +63,6 @@ if __name__ == "__main__":
     print("\nTest endpoints:")
     print("  http://localhost:8000/api/auth/permissions")
     print("  http://localhost:8000/api/query")
-    print("\n" + "="*60 + "\n")
-    
+    print("\n" + "=" * 60 + "\n")
+
     uvicorn.run(app, host="0.0.0.0", port=8000, reload=False)

@@ -9,13 +9,14 @@ import sys
 
 # Load environment variables from .env.local if it exists
 from dotenv import load_dotenv
+
 env_file = ".env.local"
 if os.path.exists(env_file):
     print(f"Loading environment from {env_file}")
     load_dotenv(env_file)
 else:
     print("WARNING: No .env.local file found. Using system environment variables.")
-    
+
 # Ensure required variables are set
 if not os.environ.get("ENCRYPTION_KEY"):
     print("ERROR: ENCRYPTION_KEY not set. Create .env.local file with test values.")
@@ -48,10 +49,12 @@ app.add_middleware(
 
 # Mount the auth endpoints
 from api.auth.validate import app as auth_app
+
 app.mount("/api/auth", auth_app)
 
 # Mount the query endpoint
 from api.query import app as query_app
+
 app.mount("/api", query_app)
 
 if __name__ == "__main__":

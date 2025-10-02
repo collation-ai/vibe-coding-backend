@@ -55,7 +55,9 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 ),
             )
-            return JSONResponse(status_code=401, content=error_response.model_dump(mode="json"))
+            return JSONResponse(
+                status_code=401, content=error_response.model_dump(mode="json")
+            )
 
         # Get user's permissions
         permissions = await permission_manager.get_user_permissions(
@@ -108,7 +110,9 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
 
 
 @app.get("/api/auth/permissions")
@@ -141,7 +145,9 @@ async def get_permissions(
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 ),
             )
-            return JSONResponse(status_code=401, content=error_response.model_dump(mode="json"))
+            return JSONResponse(
+                status_code=401, content=error_response.model_dump(mode="json")
+            )
 
         # Check if this is a gateway request with X-User-Id header
         actual_user_id = user_info["user_id"]
@@ -193,4 +199,6 @@ async def get_permissions(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )

@@ -25,6 +25,7 @@ from schemas.responses import (
 
 app = FastAPI()
 
+
 @app.get("/test/permissions")
 async def test_permissions(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
@@ -33,7 +34,7 @@ async def test_permissions(
     """Test version of the permissions endpoint"""
     start_time = time.time()
     request_id = str(uuid.uuid4())
-    
+
     print(f"=== TEST ENDPOINT CALLED ===")
     print(f"X-API-Key: {x_api_key}")
     print(f"X-User-Id: {x_user_id}")
@@ -56,7 +57,7 @@ async def test_permissions(
         # Check if this is a gateway request with X-User-Id header
         actual_user_id = user_info["user_id"]
         print(f"Default user_id from API key: {actual_user_id}")
-        
+
         if x_user_id:
             print(f"X-User-Id provided: {x_user_id}")
             actual_user_id = x_user_id
@@ -66,7 +67,7 @@ async def test_permissions(
         print(f"Getting permissions for user_id: {actual_user_id}")
         permissions = await permission_manager.get_user_permissions(actual_user_id)
         print(f"Permissions result: {permissions}")
-        
+
         print(f"Getting databases for user_id: {actual_user_id}")
         databases = await permission_manager.get_accessible_databases(actual_user_id)
         print(f"Databases result: {databases}")
@@ -98,8 +99,9 @@ async def test_permissions(
         print(f"ERROR: {e}")
         print(f"Error type: {type(e)}")
         import traceback
+
         print(f"Traceback: {traceback.format_exc()}")
-        
+
         error_response = ErrorResponse(
             error=ErrorDetail(
                 code="INTERNAL_ERROR",
@@ -112,7 +114,10 @@ async def test_permissions(
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
+        return JSONResponse(
+            status_code=500, content=error_response.model_dump(mode="json")
+        )
+
 
 if __name__ == "__main__":
     print("Starting local test server on http://localhost:8888")
