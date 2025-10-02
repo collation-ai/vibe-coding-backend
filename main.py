@@ -9,7 +9,7 @@ import os
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
-from fastapi import FastAPI, Request, Security
+from fastapi import FastAPI, Request, Security, Header
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse
 from fastapi.openapi.utils import get_openapi
@@ -91,10 +91,11 @@ async def validate_api_key_endpoint(
 
 @app.get("/api/auth/permissions", tags=["Authentication"])
 async def get_permissions_endpoint(
-    x_api_key: Annotated[Optional[str], Security(api_key_header)] = None
+    x_api_key: Annotated[Optional[str], Security(api_key_header)] = None,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
 ):
     """Get user's permissions across databases and schemas"""
-    return await get_permissions(x_api_key)
+    return await get_permissions(x_api_key, x_user_id)
 
 
 # Database structure operations (DDL)
@@ -232,6 +233,7 @@ async def get_permissions_endpoint(
 async def execute_query_endpoint(
     request: RawQueryRequest,
     x_api_key: Annotated[Optional[str], Security(api_key_header)] = None,
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
 ):
     """Execute raw SQL query with safety controls
 
@@ -239,7 +241,7 @@ async def execute_query_endpoint(
     Read-only queries require 'read' permission.
     Modifying queries require 'write' permission.
     """
-    return await execute_raw_query(request, x_api_key)
+    return await execute_raw_query(request, x_api_key, x_user_id)
 
 
 # Custom OpenAPI schema
