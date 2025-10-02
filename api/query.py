@@ -187,7 +187,7 @@ async def execute_raw_query(
         if x_user_id:
             # This is a request from the gateway on behalf of another user
             actual_user_id = x_user_id
-            logger.info(f"Gateway query request for user {x_user_id}")
+            # Note: Gateway query request for user via proxy
 
         # Determine operation type and schema
         operation = determine_operation_type(request.query)

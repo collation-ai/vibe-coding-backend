@@ -149,9 +149,7 @@ async def get_permissions(
             # This is a request from the gateway on behalf of another user
             # We trust the gateway's user ID (since it already authenticated)
             actual_user_id = x_user_id
-            logger.info(
-                f"Gateway request for user {x_user_id} via API key {user_info['key_id']}"
-            )
+            # Note: Gateway request for user via proxy
 
         # Get user's permissions
         permissions = await permission_manager.get_user_permissions(actual_user_id)
