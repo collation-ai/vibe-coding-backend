@@ -165,9 +165,9 @@ def determine_operation_type(query: str) -> str:
 
 @app.post("/api/query")
 async def execute_raw_query(
-    request: RawQueryRequest, 
+    request: RawQueryRequest,
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
 ):
     """Execute raw SQL query with safety controls"""
     start_time = time.time()
@@ -181,7 +181,7 @@ async def execute_raw_query(
         user_info = await auth_manager.validate_api_key(x_api_key)
         if not user_info:
             raise HTTPException(status_code=401, detail="Invalid API key")
-        
+
         # Check if this is a gateway request with X-User-Id header
         actual_user_id = user_info["user_id"]
         if x_user_id:

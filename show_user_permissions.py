@@ -52,7 +52,7 @@ async def show_permissions(username):
     else:
         current_db = None
         for perm in permissions:
-            if current_db \!= perm['database_name']:
+            if current_db != perm['database_name']:
                 current_db = perm['database_name']
                 print(f"\n  Database: {current_db}")
             
