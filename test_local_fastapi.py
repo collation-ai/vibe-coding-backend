@@ -84,13 +84,13 @@ async def test_permissions(
         response = SuccessResponse(
             data={"databases": databases, "permissions": permissions},
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
         )
 
-        return JSONResponse(status_code=200, content=response.dict())
+        return JSONResponse(status_code=200, content=response.model_dump(mode="json"))
 
     except HTTPException:
         raise
@@ -106,13 +106,13 @@ async def test_permissions(
                 message=f"An unexpected error occurred: {str(e)}",
             ),
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
         )
 
-        return JSONResponse(status_code=500, content=error_response.dict())
+        return JSONResponse(status_code=500, content=error_response.model_dump(mode="json"))
 
 if __name__ == "__main__":
     print("Starting local test server on http://localhost:8888")
