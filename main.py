@@ -92,7 +92,7 @@ async def validate_api_key_endpoint(
 @app.get("/api/auth/permissions", tags=["Authentication"])
 async def get_permissions_endpoint(
     x_api_key: Annotated[Optional[str], Security(api_key_header)] = None,
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
 ):
     """Get user's permissions across databases and schemas"""
     return await get_permissions(x_api_key, x_user_id)
@@ -233,7 +233,7 @@ async def get_permissions_endpoint(
 async def execute_query_endpoint(
     request: RawQueryRequest,
     x_api_key: Annotated[Optional[str], Security(api_key_header)] = None,
-    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id"),
 ):
     """Execute raw SQL query with safety controls
 
