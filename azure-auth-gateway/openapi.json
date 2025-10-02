@@ -1,0 +1,496 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Vibe Coding Authentication Gateway API",
+    "description": "Secure authentication gateway for Vibe Coding Backend. This gateway handles user authentication via sessions and CSRF tokens, eliminating the need to expose API keys in the browser.",
+    "version": "2.0.0",
+    "contact": {
+      "name": "Vibe Coding Support",
+      "email": "support@vibe-coding.com"
+    }
+  },
+  "servers": [
+    {
+      "url": "https://vibe-auth-gateway.azurewebsites.net",
+      "description": "Production Authentication Gateway"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Authentication",
+      "description": "User authentication endpoints"
+    },
+    {
+      "name": "Backend Proxy",
+      "description": "Proxied backend endpoints with session authentication"
+    }
+  ],
+  "paths": {
+    "/api/auth/login": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Login",
+        "description": "Authenticate with username and password to receive a session cookie and CSRF token",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["username", "password"],
+                "properties": {
+                  "username": {
+                    "type": "string",
+                    "example": "tanmais"
+                  },
+                  "password": {
+                    "type": "string",
+                    "format": "password",
+                    "example": "Login123#"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful. IMPORTANT: The session cookie is returned in the Set-Cookie header (not visible in Swagger UI - check browser DevTools Network tab or use curl -i to see it)",
+            "headers": {
+              "Set-Cookie": {
+                "description": "Session cookie (HttpOnly) - Use browser DevTools or curl -i to see this header",
+                "schema": {
+                  "type": "string",
+                  "example": "vibe_session=abc123-def456-ghi789; HttpOnly; Secure; SameSite=None; Max-Age=3600"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LoginResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials"
+          }
+        }
+      }
+    },
+    "/api/auth/logout": {
+      "post": {
+        "tags": ["Authentication"],
+        "summary": "User Logout",
+        "description": "Invalidate the current session",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "responses": {
+          "200": {
+            "description": "Logout successful",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "example": "Logged out successfully"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/api/proxy/api/health": {
+      "get": {
+        "tags": ["Backend Proxy"],
+        "summary": "Health Check",
+        "description": "Check the health status of the backend",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "responses": {
+          "200": {
+            "description": "Backend is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/proxy/api/auth/validate": {
+      "post": {
+        "tags": ["Backend Proxy"],
+        "summary": "Validate Session",
+        "description": "Validate the current session and get user information",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "responses": {
+          "200": {
+            "description": "Session is valid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ValidationResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid or expired session"
+          }
+        }
+      }
+    },
+    "/api/proxy/api/auth/permissions": {
+      "get": {
+        "tags": ["Backend Proxy"],
+        "summary": "Get User Permissions",
+        "description": "Get the current user's database and schema permissions",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "responses": {
+          "200": {
+            "description": "Permissions retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PermissionsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    },
+    "/api/proxy/api/query": {
+      "post": {
+        "tags": ["Backend Proxy"],
+        "summary": "Execute SQL Query",
+        "description": "Execute a SQL query on the specified database",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["database", "query"],
+                "properties": {
+                  "database": {
+                    "type": "string",
+                    "example": "master_db"
+                  },
+                  "query": {
+                    "type": "string",
+                    "example": "SELECT * FROM users LIMIT 10"
+                  },
+                  "params": {
+                    "type": "array",
+                    "items": {},
+                    "example": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query executed successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/QueryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Not authenticated"
+          },
+          "403": {
+            "description": "Permission denied"
+          }
+        }
+      }
+    },
+    "/api/proxy/{path}": {
+      "get": {
+        "tags": ["Backend Proxy"],
+        "summary": "Proxy GET Request",
+        "description": "Forward any GET request to the backend with authentication",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Backend API path (without /api/ prefix)"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Request successful"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      },
+      "post": {
+        "tags": ["Backend Proxy"],
+        "summary": "Proxy POST Request",
+        "description": "Forward any POST request to the backend with authentication",
+        "security": [{"cookieAuth": [], "csrfToken": []}],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Backend API path (without /api/ prefix)"
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request successful"
+          },
+          "401": {
+            "description": "Not authenticated"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "cookieAuth": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "vibe_session",
+        "description": "Session cookie set after successful login"
+      },
+      "csrfToken": {
+        "type": "apiKey",
+        "in": "header",
+        "name": "X-CSRF-Token",
+        "description": "CSRF token received from login response"
+      }
+    },
+    "schemas": {
+      "LoginResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean",
+            "example": true
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "csrfToken": {
+                "type": "string",
+                "example": "abc123-def456-ghi789",
+                "description": "CSRF token to use in X-CSRF-Token header for subsequent requests"
+              },
+              "username": {
+                "type": "string",
+                "example": "tanmais"
+              },
+              "email": {
+                "type": "string",
+                "example": "tanmais@vibe-coding.com"
+              },
+              "organization": {
+                "type": "string",
+                "example": "Vibe Coding"
+              },
+              "expiresIn": {
+                "type": "integer",
+                "example": 3600,
+                "description": "Session expiration time in seconds"
+              }
+            }
+          }
+        },
+        "example": {
+          "success": true,
+          "data": {
+            "csrfToken": "929072ec-4ad1-49c2-a5a0-7055ade3e1ef",
+            "username": "tanmais",
+            "email": "tanmais@vibe-coding.com",
+            "organization": "Vibe Coding",
+            "expiresIn": 3600
+          }
+        },
+        "description": "NOTE: The session cookie (vibe_session=xxx) is in the Set-Cookie header. Use curl -i or browser DevTools to see it."
+      },
+      "HealthResponse": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "example": "healthy"
+          },
+          "version": {
+            "type": "string",
+            "example": "1.0.0"
+          },
+          "database": {
+            "type": "boolean",
+            "example": true
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ValidationResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "valid": {
+                "type": "boolean"
+              },
+              "user": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "email": {
+                    "type": "string"
+                  },
+                  "organization": {
+                    "type": "string"
+                  }
+                }
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        }
+      },
+      "PermissionsResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "databases": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "permissions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/Permission"
+                }
+              }
+            }
+          }
+        }
+      },
+      "Permission": {
+        "type": "object",
+        "properties": {
+          "database": {
+            "type": "string"
+          },
+          "schema": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string",
+            "enum": ["read_only", "read_write"]
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updated_at": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "QueryResponse": {
+        "type": "object",
+        "properties": {
+          "success": {
+            "type": "boolean"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "rows": {
+                "type": "array",
+                "items": {
+                  "type": "object"
+                }
+              },
+              "affected_rows": {
+                "type": "integer"
+              }
+            }
+          },
+          "metadata": {
+            "type": "object"
+          }
+        }
+      }
+    }
+  },
+  "security": [
+    {
+      "cookieAuth": [],
+      "csrfToken": []
+    }
+  ]
+}
