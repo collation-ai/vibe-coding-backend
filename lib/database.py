@@ -62,6 +62,13 @@ class DatabaseManager:
 
         if pool_key not in self.pools:
             db_url = await self.get_user_database_url(user_id, database_name)
+            
+            # Ensure SSL mode is set if connecting to Azure
+            if "database.azure.com" in db_url and "sslmode=" not in db_url:
+                if "?" in db_url:
+                    db_url += "&sslmode=require"
+                else:
+                    db_url += "?sslmode=require"
 
             self.pools[pool_key] = await asyncpg.create_pool(
                 db_url,
@@ -71,7 +78,7 @@ class DatabaseManager:
                 max_inactive_connection_lifetime=20,
                 timeout=10,
                 command_timeout=settings.max_query_time_seconds,
-                ssl="require",
+                ssl="require" if "azure" in db_url else None,
             )
             await logger.ainfo(
                 "user_pool_created", user_id=user_id, database=database_name
