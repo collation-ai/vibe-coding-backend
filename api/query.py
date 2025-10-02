@@ -322,7 +322,7 @@ async def execute_raw_query(
                 metadata=MetadataResponse(
                     database=request.database,
                     schema_name=schema,
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.utcnow().isoformat(),
                     request_id=request_id,
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 ),
@@ -365,7 +365,7 @@ async def execute_raw_query(
             ),
             metadata=MetadataResponse(
                 database=request.database,
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
