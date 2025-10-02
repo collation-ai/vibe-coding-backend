@@ -35,7 +35,7 @@ echo "Creating deployment package..."
 
 # Create a temporary copy without local.settings.json
 mkdir -p temp_deploy
-cp -r login logout proxy shared *.js *.json node_modules temp_deploy/
+cp -r login logout proxy docs shared *.js *.json node_modules temp_deploy/ 2>/dev/null || true
 rm -f temp_deploy/local.settings.json
 
 # Create zip file

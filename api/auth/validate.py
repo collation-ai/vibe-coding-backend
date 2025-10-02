@@ -112,7 +112,10 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
 
 
 @app.get("/api/auth/permissions")
-async def get_permissions(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+async def get_permissions(
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
+):
     """Get user's permissions across all databases and schemas"""
     start_time = time.time()
     request_id = str(uuid.uuid4())
@@ -140,17 +143,25 @@ async def get_permissions(x_api_key: Optional[str] = Header(None, alias="X-API-K
             )
             return JSONResponse(status_code=401, content=error_response.dict())
 
+        # Check if this is a gateway request with X-User-Id header
+        actual_user_id = user_info["user_id"]
+        if x_user_id:
+            # This is a request from the gateway on behalf of another user
+            # We trust the gateway's user ID (since it already authenticated)
+            actual_user_id = x_user_id
+            logger.info(f"Gateway request for user {x_user_id} via API key {user_info['key_id']}")
+
         # Get user's permissions
         permissions = await permission_manager.get_user_permissions(
-            user_info["user_id"]
+            actual_user_id
         )
         databases = await permission_manager.get_accessible_databases(
-            user_info["user_id"]
+            actual_user_id
         )
 
         # Log the operation
         await audit_logger.log_operation(
-            user_id=user_info["user_id"],
+            user_id=actual_user_id,
             api_key_id=user_info["key_id"],
             endpoint="/api/auth/permissions",
             method="GET",

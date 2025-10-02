@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Vibe Coding Gateway API Documentation</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+        }
+        .swagger-ui .topbar {
+            display: none;
+        }
+        .info {
+            margin: 20px;
+            padding: 20px;
+            background: #f0f0f0;
+            border-radius: 8px;
+        }
+        .info h2 {
+            color: #333;
+        }
+        .info .warning {
+            background: #fff3cd;
+            border: 1px solid #ffc107;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info .success {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .info code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="info">
+        <h2>🔒 Vibe Coding Authentication Gateway API</h2>
+        
+        <div class="success">
+            <strong>✅ Security Issue Resolved:</strong> API keys are no longer exposed in the browser. 
+            All authentication is handled server-side through secure sessions.
+        </div>
+        
+        <h3>Quick Start:</h3>
+        <ol>
+            <li><strong>Login:</strong> Use <code>/api/auth/login</code> with your username and password</li>
+            <li><strong>Get Session & CSRF:</strong> 
+                <ul>
+                    <li>Session ID comes in the <code>Set-Cookie</code> header</li>
+                    <li>CSRF token comes in the JSON response body</li>
+                </ul>
+            </li>
+            <li><strong>Make API Calls:</strong> Include both session cookie and CSRF token in all requests</li>
+        </ol>
+        
+        <h3>Authentication Flow:</h3>
+        <pre><code>1. POST /api/auth/login
+   Body: {"username": "tanmais", "password": "Login123#"}
+   
+2. Response:
+   Header: Set-Cookie: vibe_session=xxxxx
+   Body: {"data": {"csrfToken": "yyyyy", ...}}
+   
+3. Use in subsequent requests:
+   Header: Cookie: vibe_session=xxxxx
+   Header: X-CSRF-Token: yyyyy</code></pre>
+        
+        <div class="warning">
+            <strong>⚠️ Important:</strong> All backend endpoints must be accessed through the <code>/api/proxy/*</code> path. 
+            Direct backend access will fail without proper API key authentication.
+        </div>
+        
+        <h3>Test Credentials:</h3>
+        <ul>
+            <li>Username: <code>tanmais</code></li>
+            <li>Password: <code>Login123#</code></li>
+        </ul>
+    </div>
+    
+    <div id="swagger-ui"></div>
+    
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-bundle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/swagger-ui-dist@5/swagger-ui-standalone-preset.js"></script>
+    <script>
+        window.onload = function() {
+            const ui = SwaggerUIBundle({
+                url: "./openapi.json",
+                dom_id: '#swagger-ui',
+                deepLinking: true,
+                presets: [
+                    SwaggerUIBundle.presets.apis,
+                    SwaggerUIStandalonePreset
+                ],
+                plugins: [
+                    SwaggerUIBundle.plugins.DownloadUrl
+                ],
+                layout: "StandaloneLayout",
+                requestInterceptor: (request) => {
+                    // For testing in Swagger UI
+                    const session = localStorage.getItem('vibe_session');
+                    const csrf = localStorage.getItem('vibe_csrf');
+                    
+                    if (session && !request.url.includes('/login')) {
+                        request.headers['Cookie'] = `vibe_session=${session}`;
+                    }
+                    if (csrf && !request.url.includes('/login')) {
+                        request.headers['X-CSRF-Token'] = csrf;
+                    }
+                    
+                    return request;
+                },
+                responseInterceptor: (response) => {
+                    // Store session and CSRF for testing
+                    if (response.url.includes('/login') && response.status === 200) {
+                        try {
+                            const data = JSON.parse(response.text);
+                            if (data.data && data.data.csrfToken) {
+                                localStorage.setItem('vibe_csrf', data.data.csrfToken);
+                                console.log('CSRF Token stored:', data.data.csrfToken);
+                            }
+                            
+                            // Extract session from Set-Cookie header
+                            const setCookie = response.headers['set-cookie'];
+                            if (setCookie) {
+                                const match = setCookie.match(/vibe_session=([^;]+)/);
+                                if (match) {
+                                    localStorage.setItem('vibe_session', match[1]);
+                                    console.log('Session stored:', match[1]);
+                                }
+                            }
+                        } catch (e) {}
+                    }
+                    return response;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

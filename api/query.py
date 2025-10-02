@@ -165,7 +165,9 @@ def determine_operation_type(query: str) -> str:
 
 @app.post("/api/query")
 async def execute_raw_query(
-    request: RawQueryRequest, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    request: RawQueryRequest, 
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+    x_user_id: Optional[str] = Header(None, alias="X-User-Id")
 ):
     """Execute raw SQL query with safety controls"""
     start_time = time.time()
@@ -179,6 +181,13 @@ async def execute_raw_query(
         user_info = await auth_manager.validate_api_key(x_api_key)
         if not user_info:
             raise HTTPException(status_code=401, detail="Invalid API key")
+        
+        # Check if this is a gateway request with X-User-Id header
+        actual_user_id = user_info["user_id"]
+        if x_user_id:
+            # This is a request from the gateway on behalf of another user
+            actual_user_id = x_user_id
+            logger.info(f"Gateway query request for user {x_user_id}")
 
         # Determine operation type and schema
         operation = determine_operation_type(request.query)
@@ -193,7 +202,7 @@ async def execute_raw_query(
 
         # Check permissions
         has_permission = await permission_manager.check_permission(
-            user_info["user_id"], request.database, schema, operation
+            actual_user_id, request.database, schema, operation
         )
 
         if not has_permission:
@@ -250,7 +259,7 @@ async def execute_raw_query(
 
             if returns_data:
                 result = await db_manager.execute_query(
-                    user_info["user_id"],
+                    actual_user_id,
                     request.database,
                     request.query,
                     processed_params,
@@ -276,7 +285,7 @@ async def execute_raw_query(
             else:
                 # Execute non-SELECT query
                 affected = await db_manager.execute_query(
-                    user_info["user_id"],
+                    actual_user_id,
                     request.database,
                     request.query,
                     processed_params,
@@ -292,7 +301,7 @@ async def execute_raw_query(
 
             # Log the operation
             await audit_logger.log_operation(
-                user_id=user_info["user_id"],
+                user_id=actual_user_id,
                 api_key_id=user_info["key_id"],
                 endpoint="/api/query",
                 method="POST",
