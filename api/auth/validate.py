@@ -50,7 +50,7 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
                     message="The provided API key is invalid or has been revoked",
                 ),
                 metadata=MetadataResponse(
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.utcnow().isoformat(),
                     request_id=request_id,
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 ),
@@ -83,7 +83,7 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
                 "permissions": permissions,
             },
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
@@ -102,7 +102,7 @@ async def validate_api_key(x_api_key: Optional[str] = Header(None, alias="X-API-
                 message="An internal error occurred during validation",
             ),
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
@@ -136,7 +136,7 @@ async def get_permissions(
                     message="The provided API key is invalid or has been revoked",
                 ),
                 metadata=MetadataResponse(
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.utcnow().isoformat(),
                     request_id=request_id,
                     execution_time_ms=int((time.time() - start_time) * 1000),
                 ),
@@ -168,7 +168,7 @@ async def get_permissions(
         response = SuccessResponse(
             data={"databases": databases, "permissions": permissions},
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
@@ -187,7 +187,7 @@ async def get_permissions(
                 message="An internal error occurred while fetching permissions",
             ),
             metadata=MetadataResponse(
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.utcnow().isoformat(),
                 request_id=request_id,
                 execution_time_ms=int((time.time() - start_time) * 1000),
             ),
