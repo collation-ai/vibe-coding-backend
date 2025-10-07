@@ -11,15 +11,19 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from fastapi import FastAPI, Request, Security, Header
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse, FileResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import APIKeyHeader
+from fastapi.staticfiles import StaticFiles
 from typing import Optional, Annotated
 import uuid
 
 # Import all endpoint modules
 from api.health import health_check
 from api.auth.validate import validate_api_key, get_permissions
+from api.auth.request_reset import router as request_reset_router
+from api.auth.reset_password import router as reset_password_router
+from api.admin_endpoints.remove_user import router as remove_user_router
 
 # TEMPORARILY DISABLED: Tables and Data endpoints
 # from api.tables.index import (
@@ -29,6 +33,7 @@ from api.auth.validate import validate_api_key, get_permissions
 #     query_data, insert_data, update_data, delete_data
 # )
 from api.query import execute_raw_query
+from api.admin import router as admin_router
 
 # Import request/response schemas
 from schemas.requests import RawQueryRequest
@@ -55,6 +60,18 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Include admin router
+app.include_router(admin_router)
+
+# Include password reset routers
+app.include_router(request_reset_router)
+app.include_router(reset_password_router)
+app.include_router(remove_user_router)
+
+# Mount static files for admin interface
+if os.path.exists("admin"):
+    app.mount("/admin/static", StaticFiles(directory="admin"), name="admin-static")
+
 
 # Add request ID middleware
 @app.middleware("http")
@@ -71,6 +88,27 @@ async def add_request_id(request: Request, call_next):
 async def root():
     """Redirect to API documentation"""
     return RedirectResponse(url="/docs")
+
+
+# Admin Interface
+@app.get("/admin", include_in_schema=False)
+async def admin_interface():
+    """Serve admin interface"""
+    return FileResponse("admin/index.html")
+
+
+@app.get("/admin.js", include_in_schema=False)
+async def admin_js():
+    """Serve admin JavaScript (with cache busting)"""
+    from fastapi.responses import Response
+
+    with open("admin/admin.js", "r") as f:
+        content = f.read()
+    return Response(
+        content=content,
+        media_type="application/javascript",
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
+    )
 
 
 # Health check
@@ -254,33 +292,36 @@ def custom_openapi():
         version="1.0.0",
         description="""
         ## Multi-tenant PostgreSQL CRUD API
-        
-        This API provides secure, multi-tenant access to PostgreSQL databases for no-code/low-code platforms.
-        
+
+        This API provides secure, multi-tenant access to PostgreSQL
+        databases for no-code/low-code platforms.
+
         ### ⚠️ IMPORTANT NOTICE
         **The `/tables` and `/data` endpoints are temporarily disabled.**
-        
-        Please use the `/api/query` endpoint for all database operations including:
+
+        Please use the `/api/query` endpoint for all database
+        operations including:
         - Creating/dropping tables
         - Inserting/updating/deleting data
         - Querying data
-        
+
         ### Features
         - 🔐 API key authentication
         - 🏢 Multi-tenant database isolation
         - 🔒 Schema-level permissions (read-only/read-write)
         - 📝 Raw SQL execution with safety controls and parameterization
-        
+
         ### Authentication
-        All endpoints (except /api/health) require an API key in the `X-API-Key` header.
-        
+        All endpoints (except /api/health) require an API key
+        in the `X-API-Key` header.
+
         ### Getting Started
         1. Create a user using the admin script
         2. Generate an API key
         3. Assign a database to the user
         4. Grant permissions on schemas
         5. Start making API calls
-        
+
         ### Permission Levels
         - **read_only**: SELECT operations only
         - **read_write**: All operations (SELECT, INSERT, UPDATE, DELETE, CREATE, etc.)
@@ -337,9 +378,13 @@ def custom_openapi():
 
         # Update RawQueryRequest examples
         if "RawQueryRequest" in openapi_schema["components"]["schemas"]:
-            openapi_schema["components"]["schemas"]["RawQueryRequest"]["example"] = {
+            schemas = openapi_schema["components"]["schemas"]
+            schemas["RawQueryRequest"]["example"] = {
                 "database": "user_db_001",
-                "query": "SELECT * FROM public.users WHERE created_at > $1 AND active = $2 LIMIT $3",
+                "query": (
+                    "SELECT * FROM public.users WHERE created_at > $1 "
+                    "AND active = $2 LIMIT $3"
+                ),
                 "params": [
                     {"value": "2024-01-01", "type": "date"},
                     {"value": "true", "type": "boolean"},

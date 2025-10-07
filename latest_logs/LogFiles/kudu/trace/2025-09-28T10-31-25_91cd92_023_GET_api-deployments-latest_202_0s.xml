@@ -1,9 +1,0 @@
-<step title="Incoming Request" date="2025-09-28T10:31:25.361" instance="91cd92" url="/api/deployments/latest?deployer=GITHUB_ZIP_DEPLOY&amp;time=2025-09-28_10-30-12Z" method="GET" type="request" pid="767,1,18" Host="vibe-coding-backend.scm.azurewebsites.net" User-Agent="GITHUBACTIONS_DeployWebAppToAzure_ba578fedcb60e6828d3b7069867a0b3a5c56bb7a0e16754e4e336d2a457e8bfc" Authorization="Bas..." Content-Type="application/json; charset=utf-8" Cookie="ARRAffinity=91cd92b87676311ef3a7bf37e96dc306509d290d555b2c95d0452ca4522015a1;Path=/;HttpOnly;Secure;Domain=vibe-coding-backend.scm.azurewebsites.net; ARRAffinitySameSite=91cd92b87676311ef3a7bf37e96dc306509d290d555b2c95d0452ca4522015a1;Path=/;HttpOnly;SameSite=None;Secure;Domain=vibe-coding-backend.scm.azurewebsites.net" Content-Length="0" X-ARR-LOG-ID="4ed0551a-fe65-4c6b-b2fb-b946473fca1c" CLIENT-IP="52.173.219.150:41986" X-SITE-DEPLOYMENT-ID="vibe-coding-backend" WAS-DEFAULT-HOSTNAME="vibe-coding-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/api/deployments/latest?deployer=GITHUB_ZIP_DEPLOY&amp;time=2025-09-28_10-30-12Z" X-Client-IP="52.173.219.150" X-Client-Port="41986" >
-  <step title="Cleanup Xml Logs" date="2025-09-28T10:31:25.371" /><!-- duration: 21ms -->
-  <step title="DeploymentService.GetResult" date="2025-09-28T10:31:25.462" >
-    <step title="DeploymentService.GetLatestDeployment" date="2025-09-28T10:31:25.473" >
-      <step title="DeploymentManager.GetResults" date="2025-09-28T10:31:25.483" /><!-- duration: 322ms -->
-    </step><!-- duration: 344ms -->
-  </step><!-- duration: 372ms -->
-  <step title="Outgoing response" date="2025-09-28T10:31:25.847" type="response" statusCode="202" statusText="Accepted" /><!-- duration: 3ms -->
-</step><!-- duration: 494ms -->

@@ -1,5 +1,6 @@
 const { validateUserCredentials, logApiCall } = require('../shared/database');
 const { createSession } = require('../shared/sessions');
+const { getCorsHeaders } = require('../shared/cors');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async function (context, req) {
@@ -7,12 +8,7 @@ module.exports = async function (context, req) {
     
     // Set CORS headers
     context.res = {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Credentials': 'true'
-        }
+        headers: getCorsHeaders(req)
     };
     
     // Handle preflight
@@ -22,13 +18,13 @@ module.exports = async function (context, req) {
     }
     
     try {
-        const { username, password } = req.body;
+        const { username, password, database } = req.body;
         
-        if (!username || !password) {
+        if (!username || !password || !database) {
             context.res.status = 400;
             context.res.body = {
                 success: false,
-                error: 'Username and password are required'
+                error: 'Username, password, and database are required'
             };
             await logApiCall(null, '/api/login', 'POST', 400, 'Missing credentials');
             return;
@@ -47,9 +43,9 @@ module.exports = async function (context, req) {
             return;
         }
         
-        // Create session
+        // Create session with database info
         const csrfToken = uuidv4();
-        const session = await createSession(user.id, user.username, csrfToken);
+        const session = await createSession(user.id, user.username, csrfToken, database);
         
         // Set httpOnly cookie
         context.res.cookies = [{
@@ -62,7 +58,7 @@ module.exports = async function (context, req) {
             path: "/"
         }];
         
-        // Return success with CSRF token
+        // Return success with CSRF token (session ID is only in httpOnly cookie)
         context.res.status = 200;
         context.res.body = {
             success: true,
@@ -71,6 +67,7 @@ module.exports = async function (context, req) {
                 username: user.username,
                 email: user.email,
                 organization: user.organization,
+                database: database,
                 expiresIn: parseInt(process.env.SESSION_TIMEOUT_MINUTES || 60) * 60
             }
         };

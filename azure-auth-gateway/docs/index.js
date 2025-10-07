@@ -22,57 +22,163 @@ module.exports = async function (context, req) {
 <body>
     <div class="info">
         <h2>🔒 Vibe Coding Authentication Gateway API</h2>
-        
-        <div class="success">
-            <strong>✅ Security Issue Resolved:</strong> API keys are no longer exposed in the browser. 
-            All authentication is handled server-side through secure sessions.
-        </div>
-        
-        <h3>Quick Start:</h3>
+
+        <p>
+            This gateway provides secure, session-based authentication for the Vibe Coding Backend.
+            All authentication is handled server-side with httpOnly cookies and CSRF tokens.
+        </p>
+
+        <h3>Authentication Flow:</h3>
         <ol>
-            <li><strong>Login:</strong> Use <code>/api/auth/login</code> with your username and password</li>
-            <li><strong>Get Session & CSRF:</strong> 
+            <li><strong>Login:</strong> Call <code>/api/auth/login</code> with username, password, and database name</li>
+            <li><strong>Receive Credentials:</strong>
                 <ul>
-                    <li>Session ID comes in the <code>Set-Cookie</code> header (⚠️ NOT visible in Swagger UI)</li>
-                    <li>CSRF token comes in the JSON response body</li>
+                    <li>Session ID is set as an httpOnly cookie (secure, not accessible via JavaScript)</li>
+                    <li>CSRF token is returned in the response body</li>
                 </ul>
             </li>
-            <li><strong>Make API Calls:</strong> Include both session cookie and CSRF token in all requests</li>
+            <li><strong>Make API Calls:</strong> Include both the session cookie and CSRF token in all subsequent requests</li>
+            <li><strong>Logout:</strong> Call <code>/api/auth/logout</code> to invalidate the session</li>
         </ol>
-        
+
         <div class="warning">
-            <strong>⚠️ Important for Testing:</strong> Swagger UI doesn't show the <code>Set-Cookie</code> header. 
-            To get the session cookie, you need to:
-            <ol>
-                <li>Open browser DevTools (F12) → Network tab</li>
-                <li>Execute the login request</li>
-                <li>Find the login request and check Response Headers for <code>set-cookie: vibe_session=xxxxx</code></li>
-                <li>Or use curl: <code>curl -i -X POST "https://vibe-auth-gateway.azurewebsites.net/api/auth/login" -H "Content-Type: application/json" -d '{"username":"tanmais","password":"Login123#"}'</code></li>
-            </ol>
+            <strong>⚠️ Important Note:</strong> The session cookie is set with the <code>httpOnly</code> flag,
+            which means it's not visible in JavaScript or Swagger UI. To view it:
+            <ul>
+                <li>Open browser DevTools (F12) → Network tab → Check response headers for <code>set-cookie</code></li>
+                <li>Use <code>curl -i</code> to see all response headers including cookies</li>
+            </ul>
         </div>
-        
-        <h3>Test Credentials:</h3>
-        <ul>
-            <li>Username: <code>tanmais</code></li>
-            <li>Password: <code>Login123#</code></li>
-        </ul>
-        
-        <h3>Complete Working Example:</h3>
+
+        <h3>Example Credentials (Replace with Your Own):</h3>
+        <pre style="background: #f8f9fa; padding: 10px; border-radius: 4px; border: 1px solid #ddd;">
+Username: your_username
+Password: your_password
+Database: your_database_name
+        </pre>
+
+        <h3>Complete Working Examples:</h3>
         <pre style="background: #2d2d2d; color: #ccc; padding: 15px; border-radius: 5px; overflow-x: auto;">
-# 1. Login and get BOTH session cookie AND CSRF token
+# ============================================================
+# STEP 1: Login and get session cookie + CSRF token
+# ============================================================
 curl -i -X POST "https://vibe-auth-gateway.azurewebsites.net/api/auth/login" \\
   -H "Content-Type: application/json" \\
-  -d '{"username":"tanmais","password":"Login123#"}'
+  -d '{
+    "username": "your_username",
+    "password": "your_password",
+    "database": "your_database_name"
+  }'
 
-# Response will include:
-# Header: set-cookie: vibe_session=fa0f2c81-2208-4446-b988-fa7c0a956f65; ...
-# Body: {"data":{"csrfToken":"6136ca40-fcab-475b-9df3-45f87321b26a",...}}
+# Response includes:
+# Header: set-cookie: vibe_session=abc123-def456-ghi789; httponly; secure; ...
+# Body: {
+#   "success": true,
+#   "data": {
+#     "csrfToken": "xyz789-uvw456-rst123",
+#     "username": "your_username",
+#     "email": "your_email@example.com",
+#     "database": "your_database_name",
+#     "expiresIn": 3600
+#   }
+# }
 
-# 2. Use BOTH values in subsequent requests
+# ============================================================
+# STEP 2: Get user permissions
+# ============================================================
 curl -X GET "https://vibe-auth-gateway.azurewebsites.net/api/proxy/api/auth/permissions" \\
-  -H "Cookie: vibe_session=fa0f2c81-2208-4446-b988-fa7c0a956f65" \\
-  -H "X-CSRF-Token: 6136ca40-fcab-475b-9df3-45f87321b26a"
+  -H "Cookie: vibe_session=abc123-def456-ghi789" \\
+  -H "X-CSRF-Token: xyz789-uvw456-rst123"
+
+# Response:
+# {
+#   "success": true,
+#   "data": {
+#     "databases": ["your_database_name"],
+#     "permissions": [
+#       {
+#         "database": "your_database_name",
+#         "schema": "public",
+#         "permission": "read_write"
+#       }
+#     ]
+#   }
+# }
+
+# ============================================================
+# STEP 3: Execute a SQL query
+# ============================================================
+curl -X POST "https://vibe-auth-gateway.azurewebsites.net/api/proxy/api/query" \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: vibe_session=abc123-def456-ghi789" \\
+  -H "X-CSRF-Token: xyz789-uvw456-rst123" \\
+  -d '{
+    "database": "your_database_name",
+    "query": "SELECT * FROM users LIMIT 10",
+    "params": []
+  }'
+
+# Response:
+# {
+#   "success": true,
+#   "data": {
+#     "rows": [...],
+#     "affected_rows": 10
+#   },
+#   "metadata": {
+#     "database": "your_database_name",
+#     "execution_time_ms": 45
+#   }
+# }
+
+# ============================================================
+# STEP 4: Execute a parameterized query (safer)
+# ============================================================
+curl -X POST "https://vibe-auth-gateway.azurewebsites.net/api/proxy/api/query" \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: vibe_session=abc123-def456-ghi789" \\
+  -H "X-CSRF-Token: xyz789-uvw456-rst123" \\
+  -d '{
+    "database": "your_database_name",
+    "query": "SELECT * FROM users WHERE email = $1",
+    "params": ["user@example.com"]
+  }'
+
+# ============================================================
+# STEP 5: Insert data
+# ============================================================
+curl -X POST "https://vibe-auth-gateway.azurewebsites.net/api/proxy/api/query" \\
+  -H "Content-Type: application/json" \\
+  -H "Cookie: vibe_session=abc123-def456-ghi789" \\
+  -H "X-CSRF-Token: xyz789-uvw456-rst123" \\
+  -d '{
+    "database": "your_database_name",
+    "query": "INSERT INTO users (email, username) VALUES ($1, $2) RETURNING *",
+    "params": ["newuser@example.com", "newuser"]
+  }'
+
+# ============================================================
+# STEP 6: Logout when done
+# ============================================================
+curl -X POST "https://vibe-auth-gateway.azurewebsites.net/api/auth/logout" \\
+  -H "Cookie: vibe_session=abc123-def456-ghi789" \\
+  -H "X-CSRF-Token: xyz789-uvw456-rst123"
+
+# Response:
+# {
+#   "success": true,
+#   "message": "Logged out successfully"
+# }
         </pre>
+
+        <h3>Security Features:</h3>
+        <ul>
+            <li><strong>HttpOnly Cookies:</strong> Session tokens cannot be accessed by JavaScript</li>
+            <li><strong>CSRF Protection:</strong> All state-changing requests require CSRF token</li>
+            <li><strong>Secure Flag:</strong> Cookies only transmitted over HTTPS</li>
+            <li><strong>SameSite Protection:</strong> Configured for cross-origin requests</li>
+            <li><strong>Session Expiry:</strong> Sessions automatically expire after inactivity</li>
+        </ul>
     </div>
     
     <div id="swagger-ui"></div>
