@@ -173,7 +173,9 @@ class EmailService:
         """
         # Build reset URL (this would be the frontend URL in production)
         base_url = (
-            settings.frontend_url if hasattr(settings, "frontend_url") else "http://localhost:8000"
+            settings.frontend_url
+            if hasattr(settings, "frontend_url")
+            else "http://localhost:8000"
         )
         reset_url = f"{base_url}/reset-password?token={reset_token}"
 

@@ -49,7 +49,9 @@ async def request_password_reset(request_data: PasswordResetRequest, request: Re
 
             # Always return success to prevent email enumeration
             if not user:
-                await logger.ainfo("password_reset_request_unknown_email", email=request_data.email)
+                await logger.ainfo(
+                    "password_reset_request_unknown_email", email=request_data.email
+                )
                 return PasswordResetResponse(
                     success=True,
                     message="If an account exists with that email, a reset link has been sent.",
@@ -123,7 +125,9 @@ async def request_password_reset(request_data: PasswordResetRequest, request: Re
             )
 
     except Exception as e:
-        await logger.aerror("password_reset_request_error", error=str(e), email=request_data.email)
+        await logger.aerror(
+            "password_reset_request_error", error=str(e), email=request_data.email
+        )
         # Don't expose internal errors
         return PasswordResetResponse(
             success=True,
