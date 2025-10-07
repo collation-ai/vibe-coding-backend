@@ -3,7 +3,7 @@ Permission Granter
 Handles granting and revoking permissions at schema, table, and row levels
 """
 import asyncpg
-from typing import Dict, Any, List, Optional
+from typing import Dict, List, Optional
 import structlog
 
 from lib.database import db_manager
@@ -51,7 +51,8 @@ class PermissionGranter:
             database_name: Database name
             admin_connection_string: Admin credentials
             schema_name: Schema name
-            permissions: Dict with can_select, can_insert, can_update, can_delete, can_create_table, etc.
+            permissions: Dict with can_select, can_insert, can_update,
+                can_delete, can_create_table, etc.
             apply_to_existing: Apply to existing tables
             apply_to_future: Apply to future tables
 
@@ -98,7 +99,8 @@ class PermissionGranter:
                 if table_perms and apply_to_existing:
                     perm_str = ", ".join(table_perms)
                     await conn.execute(
-                        f'GRANT {perm_str} ON ALL TABLES IN SCHEMA "{schema_name}" TO "{pg_username}"'
+                        f'GRANT {perm_str} ON ALL TABLES IN SCHEMA '
+                        f'"{schema_name}" TO "{pg_username}"'
                     )
 
                 if table_perms and apply_to_future:
@@ -112,7 +114,8 @@ class PermissionGranter:
                 if permissions.get("can_insert") or permissions.get("can_update"):
                     if apply_to_existing:
                         await conn.execute(
-                            f'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA "{schema_name}" TO "{pg_username}"'
+                            f'GRANT USAGE, SELECT ON ALL SEQUENCES '
+                            f'IN SCHEMA "{schema_name}" TO "{pg_username}"'
                         )
                     if apply_to_future:
                         await conn.execute(
@@ -165,8 +168,10 @@ class PermissionGranter:
             admin_connection_string: Admin credentials
             schema_name: Schema name
             table_name: Table name
-            permissions: Dict with can_select, can_insert, can_update, can_delete
-            column_permissions: Optional dict like {"col1": ["SELECT"], "col2": ["SELECT", "UPDATE"]}
+            permissions: Dict with can_select, can_insert, can_update,
+                can_delete
+            column_permissions: Optional dict like
+                {"col1": ["SELECT"], "col2": ["SELECT", "UPDATE"]}
 
         Returns:
             True if successful
@@ -210,7 +215,8 @@ class PermissionGranter:
                 if perms:
                     perm_str = ", ".join(perms)
                     await conn.execute(
-                        f'GRANT {perm_str} ON "{schema_name}"."{table_name}" TO "{pg_username}"'
+                        f'GRANT {perm_str} ON "{schema_name}".'
+                        f'"{table_name}" TO "{pg_username}"'
                     )
 
                 # Grant column-level permissions if specified
@@ -219,7 +225,8 @@ class PermissionGranter:
                         column = self._validate_identifier(column)
                         col_perm_str = ", ".join(col_perms)
                         await conn.execute(
-                            f'GRANT {col_perm_str} ({column}) ON "{schema_name}"."{table_name}" TO "{pg_username}"'
+                            f'GRANT {col_perm_str} ({column}) ON '
+                            f'"{schema_name}"."{table_name}" TO "{pg_username}"'
                         )
 
                 await logger.ainfo(

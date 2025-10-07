@@ -1,16 +1,16 @@
 from fastapi import APIRouter, Header, HTTPException
-from typing import Optional, List
-from datetime import datetime
-import uuid
+from typing import Optional
 import bcrypt
 from pydantic import BaseModel, EmailStr
+import structlog
 
 from lib.auth import auth_manager
 from lib.database import db_manager
-from lib.permissions import permission_manager
 from lib.config import settings
 from lib.pg_user_manager import pg_user_manager
 from lib.permission_granter import permission_granter
+
+logger = structlog.get_logger()
 
 router = APIRouter()
 
@@ -331,7 +331,11 @@ async def assign_database(
     if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot assign master_db to users. The master database contains sensitive system data and is reserved for administrative use only.",
+            detail=(
+                "Cannot assign master_db to users. "
+                "The master database contains sensitive system data and "
+                "is reserved for administrative use only."
+            ),
         )
 
     # Encrypt the connection string
@@ -424,11 +428,16 @@ async def grant_permission(
         )
 
     # SECURITY: Prevent granting permissions on master_db
-    # The master_db contains sensitive user data and should never be accessible to regular users
+    # The master_db contains sensitive user data and should never
+    # be accessible to regular users
     if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
+            detail=(
+                "Cannot grant permissions on master_db. "
+                "The master database contains sensitive system data and "
+                "is reserved for administrative use only."
+            ),
         )
 
     pool = await db_manager.get_master_pool()
@@ -505,14 +514,18 @@ async def grant_permission(
 
                 if server:
                     # Decrypt admin password
-                    admin_password = cipher.decrypt(
-                        server["admin_password_encrypted"].encode()
-                    ).decode()
+                    encrypted = server["admin_password_encrypted"].encode()
+                    admin_password = cipher.decrypt(encrypted).decode()
 
                     # Build admin connection string
+                    host = server['host']
+                    port = server['port']
+                    username = server['admin_username']
+                    db = request.database_name
+                    ssl = server['ssl_mode']
                     admin_conn_str = (
-                        f"postgresql://{server['admin_username']}:{admin_password}@"
-                        f"{server['host']}:{server['port']}/{request.database_name}?sslmode={server['ssl_mode']}"
+                        f"postgresql://{username}:{admin_password}@"
+                        f"{host}:{port}/{db}?sslmode={ssl}"
                     )
 
                     # Map permission level to actual permissions
@@ -690,14 +703,17 @@ async def drop_pg_user(
                 )
 
             # Decrypt admin password
-            admin_password = fernet.decrypt(
-                server_row["admin_password_encrypted"].encode()
-            ).decode()
+            encrypted = server_row["admin_password_encrypted"].encode()
+            admin_password = fernet.decrypt(encrypted).decode()
 
             # Build admin connection string
             db_name = parsed.path.lstrip("/")
             ssl_mode = server_row["ssl_mode"] or "require"
-            admin_connection_string = f"postgresql://{server_row['admin_username']}:{admin_password}@{host}:{port}/{db_name}?sslmode={ssl_mode}"
+            username = server_row['admin_username']
+            admin_connection_string = (
+                f"postgresql://{username}:{admin_password}@"
+                f"{host}:{port}/{db_name}?sslmode={ssl_mode}"
+            )
 
         # Now drop the PG user
         success = await pg_user_manager.drop_pg_user(
@@ -768,13 +784,17 @@ async def grant_table_permission(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Grant table-level permissions"""
-    admin_info = await verify_admin(x_api_key)
+    await verify_admin(x_api_key)
 
     # SECURITY: Prevent granting permissions on master_db
     if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
+            detail=(
+                "Cannot grant permissions on master_db. "
+                "The master database contains sensitive system data and "
+                "is reserved for administrative use only."
+            ),
         )
 
     try:
@@ -868,13 +888,17 @@ async def create_rls_policy(
     x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Create an RLS policy"""
-    admin_info = await verify_admin(x_api_key)
+    await verify_admin(x_api_key)
 
     # SECURITY: Prevent creating RLS policies on master_db
     if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot create RLS policies on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
+            detail=(
+                "Cannot create RLS policies on master_db. "
+                "The master database contains sensitive system data and "
+                "is reserved for administrative use only."
+            ),
         )
 
     try:
@@ -1046,13 +1070,16 @@ async def list_databases_on_server(
             # Decrypt password
             try:
                 cipher = Fernet(settings.encryption_key.encode())
-                admin_password = cipher.decrypt(
-                    row["admin_password_encrypted"].encode()
-                ).decode()
+                encrypted = row["admin_password_encrypted"].encode()
+                admin_password = cipher.decrypt(encrypted).decode()
             except InvalidToken:
                 raise HTTPException(
                     status_code=500,
-                    detail="Failed to decrypt database credentials. The encryption key may have changed. Please re-save the database server credentials.",
+                    detail=(
+                        "Failed to decrypt database credentials. "
+                        "The encryption key may have changed. "
+                        "Please re-save the database server credentials."
+                    ),
                 )
 
         # Connect to postgres database to list all databases

@@ -3,11 +3,9 @@ Password Expiry Background Job
 Sends warning emails to users with expiring passwords
 """
 import asyncio
-from datetime import datetime
 import structlog
 from lib.database import db_manager
 from lib.email_service import email_service
-from lib.config import settings
 
 logger = structlog.get_logger()
 

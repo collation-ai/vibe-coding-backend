@@ -5,8 +5,8 @@ Handles creation and management of PostgreSQL database users for Vibe users
 import secrets
 import string
 import asyncpg
-from typing import Dict, Any, Optional
-from urllib.parse import urlparse, urlunparse, parse_qs, urlencode
+from typing import Dict, Optional
+from urllib.parse import urlparse, urlunparse
 from cryptography.fernet import Fernet
 import structlog
 
@@ -102,11 +102,13 @@ class PostgreSQLUserManager:
             }
         """
         # SECURITY: Prevent creating PostgreSQL users on master_db
-        # The master_db contains sensitive user data and should never be accessible to regular users
+        # The master_db contains sensitive user data and should never be
+        # accessible to regular users
         if database_name.lower() == "master_db":
             raise ValueError(
                 "Cannot create PostgreSQL user on master_db. "
-                "The master database contains sensitive system data and is reserved for administrative use only."
+                "The master database contains sensitive system data and is "
+                "reserved for administrative use only."
             )
 
         # Generate secure credentials

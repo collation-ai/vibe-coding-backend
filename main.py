@@ -292,33 +292,36 @@ def custom_openapi():
         version="1.0.0",
         description="""
         ## Multi-tenant PostgreSQL CRUD API
-        
-        This API provides secure, multi-tenant access to PostgreSQL databases for no-code/low-code platforms.
-        
+
+        This API provides secure, multi-tenant access to PostgreSQL
+        databases for no-code/low-code platforms.
+
         ### ⚠️ IMPORTANT NOTICE
         **The `/tables` and `/data` endpoints are temporarily disabled.**
-        
-        Please use the `/api/query` endpoint for all database operations including:
+
+        Please use the `/api/query` endpoint for all database
+        operations including:
         - Creating/dropping tables
         - Inserting/updating/deleting data
         - Querying data
-        
+
         ### Features
         - 🔐 API key authentication
         - 🏢 Multi-tenant database isolation
         - 🔒 Schema-level permissions (read-only/read-write)
         - 📝 Raw SQL execution with safety controls and parameterization
-        
+
         ### Authentication
-        All endpoints (except /api/health) require an API key in the `X-API-Key` header.
-        
+        All endpoints (except /api/health) require an API key
+        in the `X-API-Key` header.
+
         ### Getting Started
         1. Create a user using the admin script
         2. Generate an API key
         3. Assign a database to the user
         4. Grant permissions on schemas
         5. Start making API calls
-        
+
         ### Permission Levels
         - **read_only**: SELECT operations only
         - **read_write**: All operations (SELECT, INSERT, UPDATE, DELETE, CREATE, etc.)
@@ -375,9 +378,13 @@ def custom_openapi():
 
         # Update RawQueryRequest examples
         if "RawQueryRequest" in openapi_schema["components"]["schemas"]:
-            openapi_schema["components"]["schemas"]["RawQueryRequest"]["example"] = {
+            schemas = openapi_schema["components"]["schemas"]
+            schemas["RawQueryRequest"]["example"] = {
                 "database": "user_db_001",
-                "query": "SELECT * FROM public.users WHERE created_at > $1 AND active = $2 LIMIT $3",
+                "query": (
+                    "SELECT * FROM public.users WHERE created_at > $1 "
+                    "AND active = $2 LIMIT $3"
+                ),
                 "params": [
                     {"value": "2024-01-01", "type": "date"},
                     {"value": "true", "type": "boolean"},

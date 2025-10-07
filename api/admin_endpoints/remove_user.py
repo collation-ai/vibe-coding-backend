@@ -69,7 +69,15 @@ async def drop_postgresql_user(database_name: str, pg_username: str, server_id: 
         raise Exception(f"Database server credentials not found for {server_id}")
 
     # Connect as admin to the specific database
-    conn_string = f"postgresql://{creds['admin_username']}:{creds['admin_password']}@{creds['host']}:{creds['port']}/{database_name}?sslmode={settings.azure_db_ssl}"
+    username = creds['admin_username']
+    password = creds['admin_password']
+    host = creds['host']
+    port = creds['port']
+    ssl = settings.azure_db_ssl
+    conn_string = (
+        f"postgresql://{username}:{password}@{host}:{port}/"
+        f"{database_name}?sslmode={ssl}"
+    )
 
     try:
         conn = await asyncpg.connect(conn_string)
@@ -108,12 +116,21 @@ async def revoke_rls_policies(
     if not creds:
         return 0
 
-    conn_string = f"postgresql://{creds['admin_username']}:{creds['admin_password']}@{creds['host']}:{creds['port']}/{database_name}?sslmode={settings.azure_db_ssl}"
+    username = creds['admin_username']
+    password = creds['admin_password']
+    host = creds['host']
+    port = creds['port']
+    ssl = settings.azure_db_ssl
+    conn_string = (
+        f"postgresql://{username}:{password}@{host}:{port}/"
+        f"{database_name}?sslmode={ssl}"
+    )
 
     try:
         conn = await asyncpg.connect(conn_string)
 
         # Find all RLS policies for this user
+        policy_pattern = f"%_{pg_username}_policy"
         policies = await conn.fetch(
             """
             SELECT tablename, policyname
@@ -122,14 +139,17 @@ async def revoke_rls_policies(
             AND policyname LIKE $2
             """,
             schema_name,
-            f"%_{pg_username}_policy",
+            policy_pattern,
         )
 
         policies_dropped = 0
         for policy in policies:
             try:
+                policy_name = policy['policyname']
+                table_name = policy['tablename']
                 await conn.execute(
-                    f"DROP POLICY IF EXISTS {policy['policyname']} ON {schema_name}.{policy['tablename']}"
+                    f"DROP POLICY IF EXISTS {policy_name} "
+                    f"ON {schema_name}.{table_name}"
                 )
                 policies_dropped += 1
             except Exception as e:
@@ -215,33 +235,8 @@ async def remove_user(
                 await logger.awarning("database_assignments_fetch_failed", error=str(e))
                 db_assignments = []
 
-            # Get all schema permissions
-            try:
-                schema_perms = await conn.fetch(
-                    """
-                    SELECT database_name, schema_name
-                    FROM schema_permissions
-                    WHERE user_id = $1
-                    """,
-                    request_data.user_id,
-                )
-            except Exception as e:
-                await logger.awarning("schema_permissions_fetch_failed", error=str(e))
-                schema_perms = []
-
-            # Get all table permissions
-            try:
-                table_perms = await conn.fetch(
-                    """
-                    SELECT database_name, schema_name, table_name
-                    FROM table_permissions
-                    WHERE vibe_user_id = $1
-                    """,
-                    request_data.user_id,
-                )
-            except Exception as e:
-                await logger.awarning("table_permissions_fetch_failed", error=str(e))
-                table_perms = []
+            # Note: schema_permissions and table_permissions are deleted
+            # via CASCADE when deleting the user
 
             # Track databases affected
             for assignment in db_assignments:
