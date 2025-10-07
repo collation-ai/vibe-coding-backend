@@ -23,7 +23,7 @@ async function getTableClient() {
     return tableClient;
 }
 
-async function createSession(userId, username, csrfToken) {
+async function createSession(userId, username, csrfToken, database) {
     const sessionId = uuidv4();
     const expiresAt = new Date(Date.now() + (parseInt(process.env.SESSION_TIMEOUT_MINUTES || 60) * 60000));
     
@@ -35,6 +35,7 @@ async function createSession(userId, username, csrfToken) {
         userId: userId,
         username: username,
         csrfToken: csrfToken,
+        database: database || 'cdb_written_976_poetry',  // Store selected database
         createdAt: new Date(),
         expiresAt: expiresAt,
         lastActivityAt: new Date()

@@ -9,6 +9,17 @@ from lib.config import settings
 logger = structlog.get_logger()
 
 
+def hash_password(password: str) -> str:
+    """Hash a password using SHA-256 with salt"""
+    salted = f"{password}{settings.api_key_salt}"
+    return hashlib.sha256(salted.encode()).hexdigest()
+
+
+def verify_password(password: str, password_hash: str) -> bool:
+    """Verify a password against its hash"""
+    return hash_password(password) == password_hash
+
+
 class AuthManager:
     def __init__(self):
         self.api_key_prefix = "vibe"
@@ -39,7 +50,7 @@ class AuthManager:
         pool = await db_manager.get_master_pool()
 
         async with pool.acquire() as conn:
-            # Get user info from API key
+            # Get user info from API key with password expiry and lockout info
             row = await conn.fetchrow(
                 """
                 SELECT
@@ -49,7 +60,11 @@ class AuthManager:
                     u.email,
                     u.organization,
                     u.is_active as user_active,
-                    k.is_active as key_active
+                    k.is_active as key_active,
+                    u.password_expires_at,
+                    u.password_reset_required,
+                    u.locked_until,
+                    u.failed_login_attempts
                 FROM api_keys k
                 JOIN users u ON k.user_id = u.id
                 WHERE k.key_hash = $1
@@ -70,6 +85,22 @@ class AuthManager:
                 await logger.ainfo("api_key_expired", user_id=str(row["user_id"]))
                 return None
 
+            # Check if account is locked
+            if row["locked_until"] and row["locked_until"] > datetime.utcnow():
+                await logger.awarning(
+                    "account_locked",
+                    user_id=str(row["user_id"]),
+                    locked_until=row["locked_until"].isoformat()
+                )
+                return None
+
+            # Check if password has expired (only affects UI login, not API keys)
+            # API keys continue to work even if password expired
+            password_expired = (
+                row["password_expires_at"] and
+                row["password_expires_at"] < datetime.utcnow()
+            )
+
             # Update last used timestamp
             await conn.execute(
                 "UPDATE api_keys SET last_used_at = NOW() WHERE id = $1", row["key_id"]
@@ -80,6 +111,8 @@ class AuthManager:
                 "key_id": str(row["key_id"]),
                 "email": row["email"],
                 "organization": row["organization"],
+                "password_expired": password_expired,
+                "password_reset_required": row["password_reset_required"],
             }
 
     async def create_api_key(

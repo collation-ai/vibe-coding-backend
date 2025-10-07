@@ -16,6 +16,7 @@ class DatabaseManager:
     async def get_master_pool(self) -> asyncpg.Pool:
         """Get connection pool for master database"""
         if not self.master_pool:
+            # SSL is already configured in the connection string (sslmode=require)
             self.master_pool = await asyncpg.create_pool(
                 settings.master_db_url,
                 min_size=settings.min_pool_size,
@@ -24,7 +25,6 @@ class DatabaseManager:
                 max_inactive_connection_lifetime=30,
                 timeout=10,
                 command_timeout=settings.max_query_time_seconds,
-                ssl="require" if "azure" in settings.master_db_url else None,
             )
             await logger.ainfo(
                 "master_pool_created", url=settings.master_db_url.split("@")[1]
@@ -70,6 +70,7 @@ class DatabaseManager:
                 else:
                     db_url += "?sslmode=require"
 
+            # SSL is already configured in the connection string (sslmode=require)
             self.pools[pool_key] = await asyncpg.create_pool(
                 db_url,
                 min_size=1,  # Minimal for serverless
@@ -78,7 +79,6 @@ class DatabaseManager:
                 max_inactive_connection_lifetime=20,
                 timeout=10,
                 command_timeout=settings.max_query_time_seconds,
-                ssl="require" if "azure" in db_url else None,
             )
             await logger.ainfo(
                 "user_pool_created", user_id=user_id, database=database_name

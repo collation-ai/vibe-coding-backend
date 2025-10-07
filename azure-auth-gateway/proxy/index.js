@@ -1,18 +1,14 @@
 const fetch = require('node-fetch');
 const { getSession } = require('../shared/sessions');
 const { getUserPermissions, logApiCall } = require('../shared/database');
+const { getCorsHeaders } = require('../shared/cors');
 
 module.exports = async function (context, req) {
     context.log('Proxy endpoint called:', req.method, req.params.path);
     
     // Set CORS headers
     context.res = {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type, X-CSRF-Token, X-Database-Name',
-            'Access-Control-Allow-Credentials': 'true'
-        }
+        headers: getCorsHeaders(req)
     };
     
     // Handle preflight
@@ -24,11 +20,14 @@ module.exports = async function (context, req) {
     let userId = null;
     
     try {
-        // Get session from cookie
+        // Get session from cookie OR header (for cross-site scenarios)
         const cookies = parseCookies(req.headers.cookie || '');
-        const sessionId = cookies.vibe_session;
+        const sessionId = cookies.vibe_session || req.headers['x-session-id'];
         const csrfToken = req.headers['x-csrf-token'];
-        
+
+        context.log('Session ID source:', cookies.vibe_session ? 'cookie' : req.headers['x-session-id'] ? 'header' :
+        'none');
+        context.log('Session ID value:', sessionId);        
         if (!sessionId) {
             context.res.status = 401;
             context.res.body = {
@@ -84,10 +83,16 @@ module.exports = async function (context, req) {
             'Content-Type': req.headers['content-type'] || 'application/json'
         };
         
-        // Add database name if provided
-        if (req.headers['x-database-name']) {
-            headers['X-Database-Name'] = req.headers['x-database-name'];
+        // Add database name from session or request
+        // Priority: request body > header > session
+        let databaseName = session.database || 'cdb_written_976_poetry';
+        if (req.body && req.body.database) {
+            databaseName = req.body.database;
+        } else if (req.headers['x-database-name']) {
+            databaseName = req.headers['x-database-name'];
         }
+        headers['X-Database-Name'] = databaseName;
+        context.log('Using database:', databaseName);
         
         // Forward the request
         const options = {

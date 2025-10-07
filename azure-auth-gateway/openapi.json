@@ -30,23 +30,28 @@
       "post": {
         "tags": ["Authentication"],
         "summary": "User Login",
-        "description": "Authenticate with username and password to receive a session cookie and CSRF token",
+        "description": "Authenticate with username, password, and database to receive a session cookie and CSRF token",
         "requestBody": {
           "required": true,
           "content": {
             "application/json": {
               "schema": {
                 "type": "object",
-                "required": ["username", "password"],
+                "required": ["username", "password", "database"],
                 "properties": {
                   "username": {
                     "type": "string",
-                    "example": "tanmais"
+                    "example": "your_username"
                   },
                   "password": {
                     "type": "string",
                     "format": "password",
-                    "example": "Login123#"
+                    "example": "your_password"
+                  },
+                  "database": {
+                    "type": "string",
+                    "description": "Database name to authenticate against",
+                    "example": "your_database_name"
                   }
                 }
               }
@@ -325,15 +330,15 @@
               },
               "username": {
                 "type": "string",
-                "example": "tanmais"
+                "example": "your_username"
               },
               "email": {
                 "type": "string",
-                "example": "tanmais@vibe-coding.com"
+                "example": "user@example.com"
               },
               "organization": {
                 "type": "string",
-                "example": "Vibe Coding"
+                "example": "Your Organization"
               },
               "expiresIn": {
                 "type": "integer",
@@ -347,9 +352,9 @@
           "success": true,
           "data": {
             "csrfToken": "929072ec-4ad1-49c2-a5a0-7055ade3e1ef",
-            "username": "tanmais",
-            "email": "tanmais@vibe-coding.com",
-            "organization": "Vibe Coding",
+            "username": "your_username",
+            "email": "user@example.com",
+            "organization": "Your Organization",
             "expiresIn": 3600
           }
         },

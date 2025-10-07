@@ -102,6 +102,9 @@ temp/
 logs/
 *.log
 
+# Archived/unused files
+ignore_these_files/
+
 # Claude
 .claude/
 

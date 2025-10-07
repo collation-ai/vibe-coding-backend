@@ -1,5 +1,0 @@
-<step title="Incoming Request" date="2025-09-28T10:23:02.820" instance="91cd92" url="/logstream" method="GET" type="request" pid="767,1,15" Host="vibe-coding-backend.scm.azurewebsites.net" User-Agent="AZURECLI/2.53.0" Accept-Encoding="identity" Authorization="Bas..." x-ms-client-request-id="1bd37257-9c55-11f0-871f-14755bf7ada9" X-ARR-LOG-ID="1bd37257-9c55-11f0-871f-14755bf7ada9" CLIENT-IP="32.216.183.114:52648" X-SITE-DEPLOYMENT-ID="vibe-coding-backend" WAS-DEFAULT-HOSTNAME="vibe-coding-backend.scm.azurewebsites.net" X-Forwarded-Proto="https" X-AppService-Proto="https" X-Forwarded-TlsVersion="1.3" X-WAWS-Unencoded-URL="/logstream" X-Client-IP="32.216.183.114" X-Client-Port="52648" >
-  <step title="LogStreamHandlerMiddleware.Invoke" date="2025-09-28T10:23:02.842" /><!-- duration: 139ms -->
-  <step title="Error occurred" date="2025-09-28T10:28:03.012" type="error" text="LogStreamManager: ProcessRequest end" /><!-- duration: 10ms -->
-  <step title="Outgoing response" date="2025-09-28T10:28:03.063" type="response" statusCode="200" statusText="OK" /><!-- duration: 20ms -->
-</step><!-- duration: 300283ms -->

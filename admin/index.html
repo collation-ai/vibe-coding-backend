@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vibe Coding - Admin Dashboard</title>
+    <link rel="stylesheet" href="/admin/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🔐 Vibe Coding Admin Dashboard</h1>
+            <div class="header-info">
+                <span id="admin-info"></span>
+                <button onclick="logout()" class="btn-secondary">Logout</button>
+            </div>
+        </header>
+
+        <!-- Login Screen -->
+        <div id="login-screen" class="screen">
+            <div class="login-card">
+                <h2>Admin Login</h2>
+                <form onsubmit="login(event)">
+                    <div class="form-group">
+                        <label>Admin API Key</label>
+                        <input type="password" id="admin-api-key" placeholder="vibe_prod_xxxxx" required>
+                    </div>
+                    <button type="submit" class="btn-primary">Login</button>
+                </form>
+                <p class="hint">Use your admin API key to access the dashboard</p>
+            </div>
+        </div>
+
+        <!-- Main Dashboard -->
+        <div id="dashboard-screen" class="screen" style="display: none;">
+            <!-- Navigation Tabs -->
+            <div class="tabs">
+                <button class="tab-btn active" onclick="showTab('users')">👥 Users</button>
+                <button class="tab-btn" onclick="showTab('api-keys')">🔑 API Keys</button>
+                <button class="tab-btn" onclick="showTab('databases')">💾 Databases</button>
+                <button class="tab-btn" onclick="showTab('db-servers')">🖥️ DB Servers</button>
+                <button class="tab-btn" onclick="showTab('permissions')">🛡️ Schema Permissions</button>
+                <button class="tab-btn" onclick="showTab('pg-users')">👤 PG Users</button>
+                <button class="tab-btn" onclick="showTab('table-permissions')">📊 Table Permissions</button>
+                <button class="tab-btn" onclick="showTab('rls-policies')">🔒 RLS Policies</button>
+            </div>
+
+            <!-- Users Tab -->
+            <div id="users-tab" class="tab-content active">
+                <div class="section-header">
+                    <h2>User Management</h2>
+                    <button class="btn-primary" onclick="showCreateUserModal()">+ Create User</button>
+                </div>
+                <div class="table-container">
+                    <table id="users-table">
+                        <thead>
+                            <tr>
+                                <th>Email</th>
+                                <th>Organization</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- API Keys Tab -->
+            <div id="api-keys-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>API Key Management</h2>
+                    <button class="btn-primary" onclick="showCreateKeyModal()">+ Generate API Key</button>
+                </div>
+                <div class="filters">
+                    <select id="key-user-filter" onchange="loadApiKeys()">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="api-keys-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Key Name</th>
+                                <th>Prefix</th>
+                                <th>Status</th>
+                                <th>Last Used</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Databases Tab -->
+            <div id="databases-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Database Assignments</h2>
+                    <button class="btn-primary" onclick="showAssignDbModal()">+ Assign Database</button>
+                </div>
+                <div class="table-container">
+                    <table id="databases-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Database Name</th>
+                                <th>Assigned</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Database Servers Tab -->
+            <div id="db-servers-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Database Server Credentials</h2>
+                    <button class="btn-primary" onclick="showCreateDbServerModal()">+ Add Server</button>
+                </div>
+                <div class="alert-info" style="margin-bottom: 20px; padding: 15px; background: #d1ecf1; border-radius: 5px;">
+                    <p style="margin: 0; color: #0c5460;">
+                        <strong>Info:</strong> Store admin credentials for your database servers here.
+                        Credentials are encrypted and can be reused across forms.
+                    </p>
+                </div>
+                <div class="table-container">
+                    <table id="db-servers-table">
+                        <thead>
+                            <tr>
+                                <th>Server Name</th>
+                                <th>Host</th>
+                                <th>Port</th>
+                                <th>Admin Username</th>
+                                <th>SSL Mode</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Permissions Tab -->
+            <div id="permissions-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Schema Permissions</h2>
+                    <button class="btn-primary" onclick="showGrantPermissionModal()">+ Grant Permission</button>
+                </div>
+                <div class="filters">
+                    <select id="perm-user-filter" onchange="loadPermissions()">
+                        <option value="">All Users</option>
+                    </select>
+                </div>
+                <div class="table-container">
+                    <table id="permissions-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Database</th>
+                                <th>Schema</th>
+                                <th>Permission</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- PostgreSQL Users Tab -->
+            <div id="pg-users-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>PostgreSQL Database Users</h2>
+                    <button class="btn-primary" onclick="showCreatePgUserModal()">+ Create PG User</button>
+                </div>
+                <div class="table-container">
+                    <table id="pg-users-table">
+                        <thead>
+                            <tr>
+                                <th>Vibe User</th>
+                                <th>Database</th>
+                                <th>PG Username</th>
+                                <th>Status</th>
+                                <th>Created</th>
+                                <th>Notes</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Table Permissions Tab -->
+            <div id="table-permissions-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Table-Level Permissions</h2>
+                    <button class="btn-primary" onclick="showGrantTablePermissionModal()">+ Grant Table Permission</button>
+                </div>
+                <div class="table-container">
+                    <table id="table-permissions-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Database</th>
+                                <th>Schema.Table</th>
+                                <th>Permissions</th>
+                                <th>Column Permissions</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- RLS Policies Tab -->
+            <div id="rls-policies-tab" class="tab-content">
+                <div class="section-header">
+                    <h2>Row-Level Security Policies</h2>
+                    <button class="btn-primary" onclick="showCreateRlsPolicyModal()">+ Create RLS Policy</button>
+                    <button class="btn-secondary" onclick="showRlsTemplatesModal()">📋 View Templates</button>
+                </div>
+                <div class="table-container">
+                    <table id="rls-policies-table">
+                        <thead>
+                            <tr>
+                                <th>User</th>
+                                <th>Database</th>
+                                <th>Schema.Table</th>
+                                <th>Policy Name</th>
+                                <th>Type</th>
+                                <th>USING Expression</th>
+                                <th>Template</th>
+                                <th>Created</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Create User Modal -->
+    <div id="create-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('create-user-modal')">&times;</span>
+            <h2>Create New User</h2>
+            <form onsubmit="createUser(event)">
+                <div class="form-group">
+                    <label>Email *</label>
+                    <input type="email" id="new-user-email" required>
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="new-user-username" placeholder="Optional, defaults to email">
+                </div>
+                <div class="form-group">
+                    <label>Password *</label>
+                    <input type="password" id="new-user-password" required minlength="8">
+                </div>
+                <div class="form-group">
+                    <label>Organization</label>
+                    <input type="text" id="new-user-org" placeholder="e.g., Acme Corp">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('create-user-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create API Key Modal -->
+    <div id="create-key-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('create-key-modal')">&times;</span>
+            <h2>Generate API Key</h2>
+            <form onsubmit="createApiKey(event)">
+                <div class="form-group">
+                    <label>User *</label>
+                    <select id="key-user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Key Name *</label>
+                    <input type="text" id="key-name" placeholder="e.g., Production Key" required>
+                </div>
+                <div class="form-group">
+                    <label>Environment</label>
+                    <select id="key-env">
+                        <option value="prod">Production</option>
+                        <option value="dev">Development</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Expires In (days)</label>
+                    <input type="number" id="key-expiry" placeholder="Leave empty for no expiration">
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('create-key-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Generate Key</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- API Key Display Modal -->
+    <div id="api-key-display-modal" class="modal">
+        <div class="modal-content">
+            <h2>⚠️ API Key Generated</h2>
+            <div class="alert-warning">
+                <p><strong>Important:</strong> Save this API key now. You won't be able to see it again!</p>
+            </div>
+            <div class="key-display">
+                <input type="text" id="generated-key" readonly>
+                <button onclick="copyApiKey()" class="btn-secondary">Copy</button>
+            </div>
+            <div class="form-actions">
+                <button class="btn-primary" onclick="closeModal('api-key-display-modal')">I've Saved It</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Assign Database Modal -->
+    <div id="assign-db-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('assign-db-modal')">&times;</span>
+            <h2>Assign Database to User</h2>
+            <form onsubmit="assignDatabase(event)">
+                <div class="form-group">
+                    <label>User *</label>
+                    <select id="db-user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Database Name *</label>
+                    <input type="text" id="db-name" placeholder="e.g., user_db_001" required>
+                </div>
+                <div class="form-group">
+                    <label>Connection String *</label>
+                    <textarea id="db-connection-string" rows="3" placeholder="postgresql://user:pass@host:5432/db?sslmode=require" required></textarea>
+                    <small>Will be encrypted before storage</small>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('assign-db-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Assign Database</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grant Permission Modal -->
+    <div id="grant-permission-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('grant-permission-modal')">&times;</span>
+            <h2>Grant Schema Permission</h2>
+            <form onsubmit="grantPermission(event)">
+                <div class="form-group">
+                    <label>User *</label>
+                    <select id="perm-user-select" required onchange="loadUserDatabases(this.value)"></select>
+                </div>
+                <div class="form-group">
+                    <label>Database *</label>
+                    <select id="perm-database-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Schema Name *</label>
+                    <input type="text" id="perm-schema" placeholder="e.g., public" value="public" required>
+                </div>
+                <div class="form-group">
+                    <label>Permission Level *</label>
+                    <select id="perm-level" required>
+                        <option value="read_only">Read Only</option>
+                        <option value="read_write">Read & Write</option>
+                    </select>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('grant-permission-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Grant Permission</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Database Server Modal -->
+    <div id="create-db-server-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('create-db-server-modal')">&times;</span>
+            <h2>Add Database Server</h2>
+            <form onsubmit="createDbServer(event)">
+                <div class="form-group">
+                    <label>Server Name * (friendly name)</label>
+                    <input type="text" id="db-server-name" placeholder="e.g., Azure Production" required>
+                    <small>Used to identify this server in dropdowns</small>
+                </div>
+                <div class="form-group">
+                    <label>Host *</label>
+                    <input type="text" id="db-server-host" placeholder="e.g., server.postgres.database.azure.com" required>
+                </div>
+                <div class="form-group">
+                    <label>Port</label>
+                    <input type="number" id="db-server-port" value="5432" required>
+                </div>
+                <div class="form-group">
+                    <label>Admin Username *</label>
+                    <input type="text" id="db-server-username" placeholder="e.g., postgres or admin@server" required>
+                </div>
+                <div class="form-group">
+                    <label>Admin Password *</label>
+                    <input type="password" id="db-server-password" required>
+                    <small>Will be encrypted before storage</small>
+                </div>
+                <div class="form-group">
+                    <label>SSL Mode</label>
+                    <select id="db-server-ssl">
+                        <option value="require">Require</option>
+                        <option value="prefer">Prefer</option>
+                        <option value="allow">Allow</option>
+                        <option value="disable">Disable</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="db-server-notes" rows="2" placeholder="Optional notes about this server"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('create-db-server-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Add Server</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create PostgreSQL User Modal -->
+    <div id="create-pg-user-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('create-pg-user-modal')">&times;</span>
+            <h2>Create PostgreSQL User</h2>
+            <form onsubmit="createPgUser(event)">
+                <div class="form-group">
+                    <label>Vibe User *</label>
+                    <select id="pg-user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Database *</label>
+                    <select id="pg-database-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Admin Credentials *</label>
+                    <select id="pg-cred-type" onchange="togglePgCredentialInput()">
+                        <option value="stored">Use Stored Server</option>
+                        <option value="custom">Enter Custom Connection String</option>
+                    </select>
+                </div>
+                <div class="form-group" id="pg-stored-server-group">
+                    <label>Select Database Server *</label>
+                    <select id="pg-stored-server" onchange="onPgServerSelected()"></select>
+                </div>
+                <div class="form-group" id="pg-custom-connection-group" style="display: none;">
+                    <label>Admin Connection String *</label>
+                    <textarea id="pg-admin-connection" rows="3" placeholder="postgresql://admin:pass@host:5432/db?sslmode=require"></textarea>
+                    <small>Super-user credentials for creating PostgreSQL user</small>
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="pg-user-notes" rows="2" placeholder="Optional notes"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('create-pg-user-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create PG User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Grant Table Permission Modal -->
+    <div id="grant-table-permission-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('grant-table-permission-modal')">&times;</span>
+            <h2>Grant Table Permission</h2>
+            <form onsubmit="grantTablePermission(event)">
+                <div class="form-group">
+                    <label>User *</label>
+                    <select id="table-perm-user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Database *</label>
+                    <input type="text" id="table-perm-database" placeholder="e.g., user_db_001" required>
+                </div>
+                <div class="form-group">
+                    <label>Admin Credentials *</label>
+                    <select id="table-perm-cred-type" onchange="toggleTablePermCredentialInput()">
+                        <option value="stored">Use Stored Server</option>
+                        <option value="custom">Enter Custom Connection String</option>
+                    </select>
+                </div>
+                <div class="form-group" id="table-perm-stored-server-group">
+                    <label>Select Database Server *</label>
+                    <select id="table-perm-stored-server"></select>
+                </div>
+                <div class="form-group" id="table-perm-custom-connection-group" style="display: none;">
+                    <label>Admin Connection String *</label>
+                    <textarea id="table-perm-admin-connection" rows="3" placeholder="postgresql://admin:pass@host:5432/db?sslmode=require"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Schema Name *</label>
+                    <input type="text" id="table-perm-schema" placeholder="e.g., public" value="public" required>
+                </div>
+                <div class="form-group">
+                    <label>Table Name *</label>
+                    <input type="text" id="table-perm-table" placeholder="e.g., users" required>
+                </div>
+                <div class="form-group">
+                    <label>Permissions</label>
+                    <div class="checkbox-group">
+                        <label><input type="checkbox" id="table-perm-select"> SELECT (Read)</label>
+                        <label><input type="checkbox" id="table-perm-insert"> INSERT</label>
+                        <label><input type="checkbox" id="table-perm-update"> UPDATE</label>
+                        <label><input type="checkbox" id="table-perm-delete"> DELETE</label>
+                        <label><input type="checkbox" id="table-perm-truncate"> TRUNCATE</label>
+                        <label><input type="checkbox" id="table-perm-references"> REFERENCES</label>
+                        <label><input type="checkbox" id="table-perm-trigger"> TRIGGER</label>
+                    </div>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('grant-table-permission-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Grant Permission</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create RLS Policy Modal -->
+    <div id="create-rls-policy-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('create-rls-policy-modal')">&times;</span>
+            <h2>Create RLS Policy</h2>
+            <form onsubmit="createRlsPolicy(event)">
+                <div class="form-group">
+                    <label>User *</label>
+                    <select id="rls-user-select" required></select>
+                </div>
+                <div class="form-group">
+                    <label>Database *</label>
+                    <input type="text" id="rls-database" placeholder="e.g., user_db_001" required>
+                </div>
+                <div class="form-group">
+                    <label>Admin Credentials *</label>
+                    <select id="rls-cred-type" onchange="toggleRlsCredentialInput()">
+                        <option value="stored">Use Stored Server</option>
+                        <option value="custom">Enter Custom Connection String</option>
+                    </select>
+                </div>
+                <div class="form-group" id="rls-stored-server-group">
+                    <label>Select Database Server *</label>
+                    <select id="rls-stored-server"></select>
+                </div>
+                <div class="form-group" id="rls-custom-connection-group" style="display: none;">
+                    <label>Admin Connection String *</label>
+                    <textarea id="rls-admin-connection" rows="3" placeholder="postgresql://admin:pass@host:5432/db?sslmode=require"></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Schema Name *</label>
+                    <input type="text" id="rls-schema" placeholder="e.g., public" value="public" required>
+                </div>
+                <div class="form-group">
+                    <label>Table Name *</label>
+                    <input type="text" id="rls-table" placeholder="e.g., accounts" required>
+                </div>
+                <div class="form-group">
+                    <label>Policy Name *</label>
+                    <input type="text" id="rls-policy-name" placeholder="e.g., user_access_policy" required>
+                </div>
+                <div class="form-group">
+                    <label>Policy Type *</label>
+                    <select id="rls-policy-type" required>
+                        <option value="ALL">ALL (applies to all operations)</option>
+                        <option value="SELECT">SELECT (read only)</option>
+                        <option value="INSERT">INSERT</option>
+                        <option value="UPDATE">UPDATE</option>
+                        <option value="DELETE">DELETE</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Command Type</label>
+                    <select id="rls-command-type">
+                        <option value="PERMISSIVE">PERMISSIVE (OR logic)</option>
+                        <option value="RESTRICTIVE">RESTRICTIVE (AND logic)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>USING Expression *</label>
+                    <textarea id="rls-using-expression" rows="3" placeholder="e.g., user_id = current_user" required></textarea>
+                    <small>SQL expression that determines which rows are visible</small>
+                </div>
+                <div class="form-group">
+                    <label>WITH CHECK Expression</label>
+                    <textarea id="rls-with-check-expression" rows="3" placeholder="e.g., user_id = current_user"></textarea>
+                    <small>Optional: SQL expression for validating new/updated rows</small>
+                </div>
+                <div class="form-group">
+                    <label>Template Used</label>
+                    <input type="text" id="rls-template-used" placeholder="Optional: template name if using one">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="rls-notes" rows="2" placeholder="Optional notes"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="button" class="btn-secondary" onclick="closeModal('create-rls-policy-modal')">Cancel</button>
+                    <button type="submit" class="btn-primary">Create Policy</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- RLS Templates Modal -->
+    <div id="rls-templates-modal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="closeModal('rls-templates-modal')">&times;</span>
+            <h2>RLS Policy Templates</h2>
+            <div id="rls-templates-list"></div>
+            <div class="form-actions">
+                <button class="btn-primary" onclick="closeModal('rls-templates-modal')">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="/admin.js?v=2.4"></script>
+</body>
+</html>

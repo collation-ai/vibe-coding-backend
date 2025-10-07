@@ -30,6 +30,15 @@ class Settings(BaseSettings):
     enable_audit_logs: bool = True
     sentry_dsn: Optional[str] = None
 
+    # Azure Communication Services
+    azure_comm_service_conn_string: Optional[str] = None
+    azure_comm_sender_email: Optional[str] = None
+    azure_comm_sender_name: str = "Vibe Coding"
+
+    # Password Policy
+    password_expiry_days: int = 90
+    password_reset_token_expiry_hours: int = 24
+
     # Development
     dev_mode: bool = False
 
