@@ -518,11 +518,11 @@ async def grant_permission(
                     admin_password = cipher.decrypt(encrypted).decode()
 
                     # Build admin connection string
-                    host = server['host']
-                    port = server['port']
-                    username = server['admin_username']
+                    host = server["host"]
+                    port = server["port"]
+                    username = server["admin_username"]
                     db = request.database_name
-                    ssl = server['ssl_mode']
+                    ssl = server["ssl_mode"]
                     admin_conn_str = (
                         f"postgresql://{username}:{admin_password}@"
                         f"{host}:{port}/{db}?sslmode={ssl}"
@@ -709,7 +709,7 @@ async def drop_pg_user(
             # Build admin connection string
             db_name = parsed.path.lstrip("/")
             ssl_mode = server_row["ssl_mode"] or "require"
-            username = server_row['admin_username']
+            username = server_row["admin_username"]
             admin_connection_string = (
                 f"postgresql://{username}:{admin_password}@"
                 f"{host}:{port}/{db_name}?sslmode={ssl_mode}"

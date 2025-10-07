@@ -99,7 +99,7 @@ class PermissionGranter:
                 if table_perms and apply_to_existing:
                     perm_str = ", ".join(table_perms)
                     await conn.execute(
-                        f'GRANT {perm_str} ON ALL TABLES IN SCHEMA '
+                        f"GRANT {perm_str} ON ALL TABLES IN SCHEMA "
                         f'"{schema_name}" TO "{pg_username}"'
                     )
 
@@ -114,7 +114,7 @@ class PermissionGranter:
                 if permissions.get("can_insert") or permissions.get("can_update"):
                     if apply_to_existing:
                         await conn.execute(
-                            f'GRANT USAGE, SELECT ON ALL SEQUENCES '
+                            f"GRANT USAGE, SELECT ON ALL SEQUENCES "
                             f'IN SCHEMA "{schema_name}" TO "{pg_username}"'
                         )
                     if apply_to_future:
@@ -225,7 +225,7 @@ class PermissionGranter:
                         column = self._validate_identifier(column)
                         col_perm_str = ", ".join(col_perms)
                         await conn.execute(
-                            f'GRANT {col_perm_str} ({column}) ON '
+                            f"GRANT {col_perm_str} ({column}) ON "
                             f'"{schema_name}"."{table_name}" TO "{pg_username}"'
                         )
 

@@ -69,10 +69,10 @@ async def drop_postgresql_user(database_name: str, pg_username: str, server_id: 
         raise Exception(f"Database server credentials not found for {server_id}")
 
     # Connect as admin to the specific database
-    username = creds['admin_username']
-    password = creds['admin_password']
-    host = creds['host']
-    port = creds['port']
+    username = creds["admin_username"]
+    password = creds["admin_password"]
+    host = creds["host"]
+    port = creds["port"]
     ssl = settings.azure_db_ssl
     conn_string = (
         f"postgresql://{username}:{password}@{host}:{port}/"
@@ -116,10 +116,10 @@ async def revoke_rls_policies(
     if not creds:
         return 0
 
-    username = creds['admin_username']
-    password = creds['admin_password']
-    host = creds['host']
-    port = creds['port']
+    username = creds["admin_username"]
+    password = creds["admin_password"]
+    host = creds["host"]
+    port = creds["port"]
     ssl = settings.azure_db_ssl
     conn_string = (
         f"postgresql://{username}:{password}@{host}:{port}/"
@@ -145,8 +145,8 @@ async def revoke_rls_policies(
         policies_dropped = 0
         for policy in policies:
             try:
-                policy_name = policy['policyname']
-                table_name = policy['tablename']
+                policy_name = policy["policyname"]
+                table_name = policy["tablename"]
                 await conn.execute(
                     f"DROP POLICY IF EXISTS {policy_name} "
                     f"ON {schema_name}.{table_name}"
