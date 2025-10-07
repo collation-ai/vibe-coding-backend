@@ -24,7 +24,7 @@ class PermissionGranter:
             raise ValueError("Identifier cannot be empty")
 
         # Remove dangerous characters
-        if any(char in identifier for char in [';', '--', '/*', '*/', '\x00']):
+        if any(char in identifier for char in [";", "--", "/*", "*/", "\x00"]):
             raise ValueError(f"Invalid identifier: {identifier}")
 
         # PostgreSQL identifiers max 63 chars
@@ -41,7 +41,7 @@ class PermissionGranter:
         schema_name: str,
         permissions: Dict[str, bool],
         apply_to_existing: bool = True,
-        apply_to_future: bool = True
+        apply_to_future: bool = True,
     ) -> bool:
         """
         Grant schema-level permissions to a PostgreSQL user
@@ -69,9 +69,7 @@ class PermissionGranter:
         try:
             # Connect with admin credentials
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
@@ -82,29 +80,36 @@ class PermissionGranter:
 
                 # Build table permission list
                 table_perms = []
-                if permissions.get('can_select'): table_perms.append('SELECT')
-                if permissions.get('can_insert'): table_perms.append('INSERT')
-                if permissions.get('can_update'): table_perms.append('UPDATE')
-                if permissions.get('can_delete'): table_perms.append('DELETE')
-                if permissions.get('can_truncate'): table_perms.append('TRUNCATE')
-                if permissions.get('can_references'): table_perms.append('REFERENCES')
-                if permissions.get('can_trigger'): table_perms.append('TRIGGER')
+                if permissions.get("can_select"):
+                    table_perms.append("SELECT")
+                if permissions.get("can_insert"):
+                    table_perms.append("INSERT")
+                if permissions.get("can_update"):
+                    table_perms.append("UPDATE")
+                if permissions.get("can_delete"):
+                    table_perms.append("DELETE")
+                if permissions.get("can_truncate"):
+                    table_perms.append("TRUNCATE")
+                if permissions.get("can_references"):
+                    table_perms.append("REFERENCES")
+                if permissions.get("can_trigger"):
+                    table_perms.append("TRIGGER")
 
                 if table_perms and apply_to_existing:
-                    perm_str = ', '.join(table_perms)
+                    perm_str = ", ".join(table_perms)
                     await conn.execute(
                         f'GRANT {perm_str} ON ALL TABLES IN SCHEMA "{schema_name}" TO "{pg_username}"'
                     )
 
                 if table_perms and apply_to_future:
-                    perm_str = ', '.join(table_perms)
+                    perm_str = ", ".join(table_perms)
                     await conn.execute(
                         f'ALTER DEFAULT PRIVILEGES IN SCHEMA "{schema_name}" '
                         f'GRANT {perm_str} ON TABLES TO "{pg_username}"'
                     )
 
                 # Grant sequence permissions for SERIAL columns
-                if permissions.get('can_insert') or permissions.get('can_update'):
+                if permissions.get("can_insert") or permissions.get("can_update"):
                     if apply_to_existing:
                         await conn.execute(
                             f'GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA "{schema_name}" TO "{pg_username}"'
@@ -116,7 +121,7 @@ class PermissionGranter:
                         )
 
                 # DDL permissions
-                if permissions.get('can_create_table'):
+                if permissions.get("can_create_table"):
                     await conn.execute(
                         f'GRANT CREATE ON SCHEMA "{schema_name}" TO "{pg_username}"'
                     )
@@ -126,7 +131,7 @@ class PermissionGranter:
                     vibe_user_id=vibe_user_id,
                     pg_username=pg_username,
                     schema=schema_name,
-                    permissions=permissions
+                    permissions=permissions,
                 )
 
             await admin_pool.close()
@@ -137,7 +142,7 @@ class PermissionGranter:
                 "grant_schema_permissions_failed",
                 vibe_user_id=vibe_user_id,
                 schema=schema_name,
-                error=str(e)
+                error=str(e),
             )
             raise
 
@@ -149,7 +154,7 @@ class PermissionGranter:
         schema_name: str,
         table_name: str,
         permissions: Dict[str, bool],
-        column_permissions: Optional[Dict[str, List[str]]] = None
+        column_permissions: Optional[Dict[str, List[str]]] = None,
     ) -> bool:
         """
         Grant table-level permissions
@@ -175,9 +180,7 @@ class PermissionGranter:
 
         try:
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
@@ -188,17 +191,24 @@ class PermissionGranter:
 
                 # Build permission list
                 perms = []
-                if permissions.get('can_select'): perms.append('SELECT')
-                if permissions.get('can_insert'): perms.append('INSERT')
-                if permissions.get('can_update'): perms.append('UPDATE')
-                if permissions.get('can_delete'): perms.append('DELETE')
-                if permissions.get('can_truncate'): perms.append('TRUNCATE')
-                if permissions.get('can_references'): perms.append('REFERENCES')
-                if permissions.get('can_trigger'): perms.append('TRIGGER')
+                if permissions.get("can_select"):
+                    perms.append("SELECT")
+                if permissions.get("can_insert"):
+                    perms.append("INSERT")
+                if permissions.get("can_update"):
+                    perms.append("UPDATE")
+                if permissions.get("can_delete"):
+                    perms.append("DELETE")
+                if permissions.get("can_truncate"):
+                    perms.append("TRUNCATE")
+                if permissions.get("can_references"):
+                    perms.append("REFERENCES")
+                if permissions.get("can_trigger"):
+                    perms.append("TRIGGER")
 
                 # Grant table-level permissions
                 if perms:
-                    perm_str = ', '.join(perms)
+                    perm_str = ", ".join(perms)
                     await conn.execute(
                         f'GRANT {perm_str} ON "{schema_name}"."{table_name}" TO "{pg_username}"'
                     )
@@ -207,7 +217,7 @@ class PermissionGranter:
                 if column_permissions:
                     for column, col_perms in column_permissions.items():
                         column = self._validate_identifier(column)
-                        col_perm_str = ', '.join(col_perms)
+                        col_perm_str = ", ".join(col_perms)
                         await conn.execute(
                             f'GRANT {col_perm_str} ({column}) ON "{schema_name}"."{table_name}" TO "{pg_username}"'
                         )
@@ -217,7 +227,7 @@ class PermissionGranter:
                     vibe_user_id=vibe_user_id,
                     pg_username=pg_username,
                     table=f"{schema_name}.{table_name}",
-                    permissions=permissions
+                    permissions=permissions,
                 )
 
             await admin_pool.close()
@@ -248,14 +258,14 @@ class PermissionGranter:
                     database_name,
                     schema_name,
                     table_name,
-                    permissions.get('can_select', False),
-                    permissions.get('can_insert', False),
-                    permissions.get('can_update', False),
-                    permissions.get('can_delete', False),
-                    permissions.get('can_truncate', False),
-                    permissions.get('can_references', False),
-                    permissions.get('can_trigger', False),
-                    column_permissions
+                    permissions.get("can_select", False),
+                    permissions.get("can_insert", False),
+                    permissions.get("can_update", False),
+                    permissions.get("can_delete", False),
+                    permissions.get("can_truncate", False),
+                    permissions.get("can_references", False),
+                    permissions.get("can_trigger", False),
+                    column_permissions,
                 )
 
             return True
@@ -265,7 +275,7 @@ class PermissionGranter:
                 "grant_table_permissions_failed",
                 vibe_user_id=vibe_user_id,
                 table=f"{schema_name}.{table_name}",
-                error=str(e)
+                error=str(e),
             )
             raise
 
@@ -280,9 +290,9 @@ class PermissionGranter:
         policy_type: str,  # SELECT, INSERT, UPDATE, DELETE, ALL
         using_expression: str,
         with_check_expression: Optional[str] = None,
-        command_type: str = 'PERMISSIVE',  # PERMISSIVE or RESTRICTIVE
+        command_type: str = "PERMISSIVE",  # PERMISSIVE or RESTRICTIVE
         template_used: Optional[str] = None,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> bool:
         """
         Create Row-Level Security policy
@@ -312,17 +322,15 @@ class PermissionGranter:
         if not pg_username:
             raise ValueError(f"No PostgreSQL user found for Vibe user {vibe_user_id}")
 
-        if policy_type not in ['SELECT', 'INSERT', 'UPDATE', 'DELETE', 'ALL']:
+        if policy_type not in ["SELECT", "INSERT", "UPDATE", "DELETE", "ALL"]:
             raise ValueError(f"Invalid policy type: {policy_type}")
 
-        if command_type not in ['PERMISSIVE', 'RESTRICTIVE']:
+        if command_type not in ["PERMISSIVE", "RESTRICTIVE"]:
             raise ValueError(f"Invalid command type: {command_type}")
 
         try:
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
@@ -332,16 +340,18 @@ class PermissionGranter:
                 )
 
                 # Build policy SQL
-                policy_sql = f'CREATE POLICY "{policy_name}" ON "{schema_name}"."{table_name}"'
-                policy_sql += f' AS {command_type}'
-                policy_sql += f' FOR {policy_type}'
+                policy_sql = (
+                    f'CREATE POLICY "{policy_name}" ON "{schema_name}"."{table_name}"'
+                )
+                policy_sql += f" AS {command_type}"
+                policy_sql += f" FOR {policy_type}"
                 policy_sql += f' TO "{pg_username}"'
 
                 if using_expression:
-                    policy_sql += f' USING ({using_expression})'
+                    policy_sql += f" USING ({using_expression})"
 
-                if with_check_expression and policy_type in ['INSERT', 'UPDATE', 'ALL']:
-                    policy_sql += f' WITH CHECK ({with_check_expression})'
+                if with_check_expression and policy_type in ["INSERT", "UPDATE", "ALL"]:
+                    policy_sql += f" WITH CHECK ({with_check_expression})"
 
                 await conn.execute(policy_sql)
 
@@ -350,7 +360,7 @@ class PermissionGranter:
                     vibe_user_id=vibe_user_id,
                     pg_username=pg_username,
                     table=f"{schema_name}.{table_name}",
-                    policy=policy_name
+                    policy=policy_name,
                 )
 
             await admin_pool.close()
@@ -376,7 +386,7 @@ class PermissionGranter:
                     using_expression,
                     with_check_expression,
                     template_used,
-                    notes
+                    notes,
                 )
 
             return True
@@ -387,14 +397,12 @@ class PermissionGranter:
                 vibe_user_id=vibe_user_id,
                 table=f"{schema_name}.{table_name}",
                 policy=policy_name,
-                error=str(e)
+                error=str(e),
             )
             raise
 
     async def drop_rls_policy(
-        self,
-        policy_id: str,
-        admin_connection_string: str
+        self, policy_id: str, admin_connection_string: str
     ) -> bool:
         """Drop an RLS policy"""
         master_pool = await db_manager.get_master_pool()
@@ -405,21 +413,19 @@ class PermissionGranter:
                 FROM rls_policies
                 WHERE id = $1 AND is_active = true
                 """,
-                policy_id
+                policy_id,
             )
 
             if not row:
                 return False
 
-        schema_name = self._validate_identifier(row['schema_name'])
-        table_name = self._validate_identifier(row['table_name'])
-        policy_name = self._validate_identifier(row['policy_name'])
+        schema_name = self._validate_identifier(row["schema_name"])
+        table_name = self._validate_identifier(row["table_name"])
+        policy_name = self._validate_identifier(row["policy_name"])
 
         try:
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
@@ -437,13 +443,15 @@ class PermissionGranter:
                     SET is_active = false, updated_at = NOW()
                     WHERE id = $1
                     """,
-                    policy_id
+                    policy_id,
                 )
 
             return True
 
         except Exception as e:
-            await logger.aerror("drop_rls_policy_failed", policy_id=policy_id, error=str(e))
+            await logger.aerror(
+                "drop_rls_policy_failed", policy_id=policy_id, error=str(e)
+            )
             return False
 
 

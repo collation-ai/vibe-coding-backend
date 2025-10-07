@@ -38,7 +38,7 @@ async def get_database_server_credentials(server_id: str):
             FROM database_servers
             WHERE id = $1
             """,
-            server_id
+            server_id,
         )
 
         if not server:
@@ -47,14 +47,14 @@ async def get_database_server_credentials(server_id: str):
         # Decrypt password
         fernet = Fernet(settings.encryption_key.encode())
         admin_password = fernet.decrypt(
-            server['admin_password_encrypted'].encode()
+            server["admin_password_encrypted"].encode()
         ).decode()
 
         return {
-            'host': server['host'],
-            'port': server['port'],
-            'admin_username': server['admin_username'],
-            'admin_password': admin_password
+            "host": server["host"],
+            "port": server["port"],
+            "admin_username": server["admin_username"],
+            "admin_password": admin_password,
         }
 
 
@@ -92,12 +92,14 @@ async def drop_postgresql_user(database_name: str, pg_username: str, server_id: 
             "failed_to_drop_pg_user",
             database=database_name,
             pg_username=pg_username,
-            error=str(e)
+            error=str(e),
         )
         return False
 
 
-async def revoke_rls_policies(database_name: str, schema_name: str, pg_username: str, server_id: str):
+async def revoke_rls_policies(
+    database_name: str, schema_name: str, pg_username: str, server_id: str
+):
     """Drop all RLS policies for a user in a schema"""
     import asyncpg
     from lib.config import settings
@@ -120,7 +122,7 @@ async def revoke_rls_policies(database_name: str, schema_name: str, pg_username:
             AND policyname LIKE $2
             """,
             schema_name,
-            f"%_{pg_username}_policy"
+            f"%_{pg_username}_policy",
         )
 
         policies_dropped = 0
@@ -134,9 +136,9 @@ async def revoke_rls_policies(database_name: str, schema_name: str, pg_username:
                 await logger.aerror(
                     "failed_to_drop_rls_policy",
                     schema=schema_name,
-                    table=policy['tablename'],
-                    policy=policy['policyname'],
-                    error=str(e)
+                    table=policy["tablename"],
+                    policy=policy["policyname"],
+                    error=str(e),
                 )
 
         await conn.close()
@@ -146,7 +148,7 @@ async def revoke_rls_policies(database_name: str, schema_name: str, pg_username:
             "failed_to_revoke_rls_policies",
             database=database_name,
             schema=schema_name,
-            error=str(e)
+            error=str(e),
         )
         return 0
 
@@ -154,7 +156,7 @@ async def revoke_rls_policies(database_name: str, schema_name: str, pg_username:
 @router.post("/api/admin/remove-user", response_model=RemoveUserResponse)
 async def remove_user(
     request_data: RemoveUserRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """
     Remove a user and cleanup all database resources
@@ -185,21 +187,18 @@ async def remove_user(
                 FROM users
                 WHERE id = $1
                 """,
-                request_data.user_id
+                request_data.user_id,
             )
 
             if not user:
-                raise HTTPException(
-                    status_code=404,
-                    detail="User not found"
-                )
+                raise HTTPException(status_code=404, detail="User not found")
 
             cleanup_stats = {
-                'pg_users_dropped': 0,
-                'schema_permissions_revoked': 0,
-                'table_permissions_revoked': 0,
-                'rls_policies_dropped': 0,
-                'databases_affected': []
+                "pg_users_dropped": 0,
+                "schema_permissions_revoked": 0,
+                "table_permissions_revoked": 0,
+                "rls_policies_dropped": 0,
+                "databases_affected": [],
             }
 
             # Get all database assignments for this user
@@ -210,7 +209,7 @@ async def remove_user(
                     FROM database_assignments
                     WHERE user_id = $1 AND is_active = true
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
             except Exception as e:
                 await logger.awarning("database_assignments_fetch_failed", error=str(e))
@@ -224,7 +223,7 @@ async def remove_user(
                     FROM schema_permissions
                     WHERE user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
             except Exception as e:
                 await logger.awarning("schema_permissions_fetch_failed", error=str(e))
@@ -238,7 +237,7 @@ async def remove_user(
                     FROM table_permissions
                     WHERE vibe_user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
             except Exception as e:
                 await logger.awarning("table_permissions_fetch_failed", error=str(e))
@@ -246,8 +245,13 @@ async def remove_user(
 
             # Track databases affected
             for assignment in db_assignments:
-                if assignment['database_name'] not in cleanup_stats['databases_affected']:
-                    cleanup_stats['databases_affected'].append(assignment['database_name'])
+                if (
+                    assignment["database_name"]
+                    not in cleanup_stats["databases_affected"]
+                ):
+                    cleanup_stats["databases_affected"].append(
+                        assignment["database_name"]
+                    )
 
             # Note: PostgreSQL user and RLS policy cleanup would require
             # direct database connections with admin credentials.
@@ -261,9 +265,9 @@ async def remove_user(
                     DELETE FROM table_permissions
                     WHERE vibe_user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
-                cleanup_stats['table_permissions_revoked'] = int(result.split()[-1])
+                cleanup_stats["table_permissions_revoked"] = int(result.split()[-1])
             except Exception as e:
                 await logger.awarning("table_permissions_cleanup_skipped", error=str(e))
 
@@ -274,11 +278,13 @@ async def remove_user(
                     DELETE FROM schema_permissions
                     WHERE user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
-                cleanup_stats['schema_permissions_revoked'] = int(result.split()[-1])
+                cleanup_stats["schema_permissions_revoked"] = int(result.split()[-1])
             except Exception as e:
-                await logger.awarning("schema_permissions_cleanup_skipped", error=str(e))
+                await logger.awarning(
+                    "schema_permissions_cleanup_skipped", error=str(e)
+                )
 
             # Remove database assignments
             try:
@@ -287,10 +293,12 @@ async def remove_user(
                     DELETE FROM database_assignments
                     WHERE user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
             except Exception as e:
-                await logger.awarning("database_assignments_cleanup_skipped", error=str(e))
+                await logger.awarning(
+                    "database_assignments_cleanup_skipped", error=str(e)
+                )
 
             # Remove audit logs (foreign key constraint)
             try:
@@ -299,7 +307,7 @@ async def remove_user(
                     DELETE FROM audit_logs
                     WHERE user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
                 await logger.ainfo("audit_logs_deleted", user_id=request_data.user_id)
             except Exception as e:
@@ -312,7 +320,7 @@ async def remove_user(
                     DELETE FROM api_keys
                     WHERE user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
                 await logger.ainfo("api_keys_deleted", user_id=request_data.user_id)
             except Exception as e:
@@ -325,9 +333,11 @@ async def remove_user(
                     DELETE FROM pg_database_users
                     WHERE vibe_user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
-                await logger.ainfo("pg_database_users_deleted", user_id=request_data.user_id)
+                await logger.ainfo(
+                    "pg_database_users_deleted", user_id=request_data.user_id
+                )
             except Exception as e:
                 await logger.awarning("pg_database_users_cleanup_skipped", error=str(e))
 
@@ -338,7 +348,7 @@ async def remove_user(
                     DELETE FROM rls_policies
                     WHERE vibe_user_id = $1
                     """,
-                    request_data.user_id
+                    request_data.user_id,
                 )
                 await logger.ainfo("rls_policies_deleted", user_id=request_data.user_id)
             except Exception as e:
@@ -350,7 +360,7 @@ async def remove_user(
                 DELETE FROM users
                 WHERE id = $1::uuid
                 """,
-                request_data.user_id
+                request_data.user_id,
             )
 
             # Log if delete actually happened
@@ -358,12 +368,13 @@ async def remove_user(
             await logger.ainfo(
                 "user_deletion_completed",
                 user_id=request_data.user_id,
-                rows_deleted=rows_deleted
+                rows_deleted=rows_deleted,
             )
 
             # Create audit record (outside transaction, optional)
             try:
                 import json
+
                 await conn.execute(
                     """
                     INSERT INTO user_cleanup_audit
@@ -374,49 +385,44 @@ async def remove_user(
                     VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9::jsonb)
                     """,
                     request_data.user_id,
-                    user['email'],
+                    user["email"],
                     request_data.cleanup_type,
                     request_data.admin_user_id,
-                    cleanup_stats['pg_users_dropped'],
-                    cleanup_stats['schema_permissions_revoked'],
-                    cleanup_stats['table_permissions_revoked'],
-                    cleanup_stats['rls_policies_dropped'],
-                    json.dumps(cleanup_stats)
+                    cleanup_stats["pg_users_dropped"],
+                    cleanup_stats["schema_permissions_revoked"],
+                    cleanup_stats["table_permissions_revoked"],
+                    cleanup_stats["rls_policies_dropped"],
+                    json.dumps(cleanup_stats),
                 )
             except Exception as audit_error:
                 # Audit logging failed but cleanup succeeded
                 await logger.awarning(
                     "user_cleanup_audit_failed",
                     error=str(audit_error),
-                    user_id=request_data.user_id
+                    user_id=request_data.user_id,
                 )
 
             await logger.ainfo(
                 "user_removed_successfully",
                 user_id=request_data.user_id,
-                email=user['email'],
+                email=user["email"],
                 performed_by=request_data.admin_user_id,
-                cleanup_stats=cleanup_stats
+                cleanup_stats=cleanup_stats,
             )
 
             return RemoveUserResponse(
                 success=True,
                 message=f"User {user['email']} removed successfully",
-                cleanup_details=cleanup_stats
+                cleanup_details=cleanup_stats,
             )
 
     except HTTPException:
         raise
     except Exception as e:
         await logger.aerror(
-            "user_removal_error",
-            user_id=request_data.user_id,
-            error=str(e)
+            "user_removal_error", user_id=request_data.user_id, error=str(e)
         )
-        raise HTTPException(
-            status_code=500,
-            detail=f"Failed to remove user: {str(e)}"
-        )
+        raise HTTPException(status_code=500, detail=f"Failed to remove user: {str(e)}")
 
 
 app = router

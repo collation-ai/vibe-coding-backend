@@ -40,7 +40,9 @@ async def cleanup_master_db_permissions():
         if schema_perms:
             print(f"\n📋 Found {len(schema_perms)} schema permissions on master_db:")
             for perm in schema_perms:
-                print(f"   - {perm['email']}: {perm['schema_name']} ({perm['permission']})")
+                print(
+                    f"   - {perm['email']}: {perm['schema_name']} ({perm['permission']})"
+                )
 
             # Delete schema permissions
             deleted_schema = await conn.execute(
@@ -62,7 +64,9 @@ async def cleanup_master_db_permissions():
         )
 
         if db_assignments:
-            print(f"\n📋 Found {len(db_assignments)} database assignments for master_db:")
+            print(
+                f"\n📋 Found {len(db_assignments)} database assignments for master_db:"
+            )
             for assign in db_assignments:
                 print(f"   - {assign['email']}: {assign['database_name']}")
 
@@ -90,8 +94,10 @@ async def cleanup_master_db_permissions():
             for pg_user in pg_users:
                 print(f"   - {pg_user['email']}: {pg_user['pg_username']}")
 
-            print("\n⚠️  WARNING: These PostgreSQL users should be manually dropped from master_db")
-            print("   Use: DROP USER IF EXISTS \"username\";")
+            print(
+                "\n⚠️  WARNING: These PostgreSQL users should be manually dropped from master_db"
+            )
+            print('   Use: DROP USER IF EXISTS "username";')
 
             # Mark as inactive in our records
             updated_pg_users = await conn.execute(
@@ -115,7 +121,9 @@ async def cleanup_master_db_permissions():
         if table_perms:
             print(f"\n📋 Found {len(table_perms)} table permissions on master_db:")
             for perm in table_perms:
-                print(f"   - {perm['email']}: {perm['schema_name']}.{perm['table_name']}")
+                print(
+                    f"   - {perm['email']}: {perm['schema_name']}.{perm['table_name']}"
+                )
 
             # Delete table permissions
             deleted_table = await conn.execute(
@@ -139,7 +147,9 @@ async def cleanup_master_db_permissions():
         if rls_policies:
             print(f"\n📋 Found {len(rls_policies)} RLS policies on master_db:")
             for policy in rls_policies:
-                print(f"   - {policy['email']}: {policy['schema_name']}.{policy['table_name']} - {policy['policy_name']}")
+                print(
+                    f"   - {policy['email']}: {policy['schema_name']}.{policy['table_name']} - {policy['policy_name']}"
+                )
 
             # Mark RLS policies as inactive
             deleted_rls = await conn.execute(
@@ -161,7 +171,9 @@ async def cleanup_master_db_permissions():
 
         if pg_users:
             print("\n⚠️  MANUAL ACTION REQUIRED:")
-            print("   The following PostgreSQL users should be manually dropped from master_db:")
+            print(
+                "   The following PostgreSQL users should be manually dropped from master_db:"
+            )
             for pg_user in pg_users:
                 print(f"   DROP USER IF EXISTS \"{pg_user['pg_username']}\";")
 

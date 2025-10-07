@@ -76,7 +76,7 @@ class CreateRlsPolicyRequest(BaseModel):
     policy_type: str  # SELECT, INSERT, UPDATE, DELETE, ALL
     using_expression: str
     with_check_expression: Optional[str] = None
-    command_type: str = 'PERMISSIVE'  # PERMISSIVE or RESTRICTIVE
+    command_type: str = "PERMISSIVE"  # PERMISSIVE or RESTRICTIVE
     template_used: Optional[str] = None
     notes: Optional[str] = None
 
@@ -87,7 +87,7 @@ class CreateDatabaseServerRequest(BaseModel):
     port: int = 5432
     admin_username: str
     admin_password: str
-    ssl_mode: str = 'require'
+    ssl_mode: str = "require"
     notes: Optional[str] = None
 
 
@@ -138,7 +138,7 @@ async def list_users(x_api_key: Optional[str] = Header(None, alias="X-API-Key"))
 @router.post("/api/admin/users")
 async def create_user(
     request: CreateUserRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Create a new user"""
     await verify_admin(x_api_key)
@@ -164,54 +164,47 @@ async def create_user(
 
             return {
                 "success": True,
-                "data": {"user_id": str(user_id), "email": request.email}
+                "data": {"user_id": str(user_id), "email": request.email},
             }
         except Exception as e:
             if "unique" in str(e).lower():
-                raise HTTPException(status_code=400, detail="Email or username already exists")
+                raise HTTPException(
+                    status_code=400, detail="Email or username already exists"
+                )
             raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.post("/api/admin/users/{user_id}/activate")
 async def activate_user(
-    user_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    user_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Activate a user"""
     await verify_admin(x_api_key)
 
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE users SET is_active = true WHERE id = $1",
-            user_id
-        )
+        await conn.execute("UPDATE users SET is_active = true WHERE id = $1", user_id)
 
     return {"success": True, "message": "User activated"}
 
 
 @router.post("/api/admin/users/{user_id}/deactivate")
 async def deactivate_user(
-    user_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    user_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Deactivate a user"""
     await verify_admin(x_api_key)
 
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
-        await conn.execute(
-            "UPDATE users SET is_active = false WHERE id = $1",
-            user_id
-        )
+        await conn.execute("UPDATE users SET is_active = false WHERE id = $1", user_id)
 
     return {"success": True, "message": "User deactivated"}
 
 
 @router.get("/api/admin/users/{user_id}/databases")
 async def get_user_databases(
-    user_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    user_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Get databases assigned to a user"""
     await verify_admin(x_api_key)
@@ -225,7 +218,7 @@ async def get_user_databases(
             WHERE user_id = $1
             ORDER BY created_at DESC
             """,
-            user_id
+            user_id,
         )
 
         databases = [dict(row) for row in rows]
@@ -236,7 +229,7 @@ async def get_user_databases(
 @router.get("/api/admin/api-keys")
 async def list_api_keys(
     user_id: Optional[str] = None,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """List all API keys"""
     await verify_admin(x_api_key)
@@ -264,7 +257,7 @@ async def list_api_keys(
 @router.post("/api/admin/api-keys")
 async def create_api_key(
     request: CreateApiKeyRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Generate a new API key for a user"""
     await verify_admin(x_api_key)
@@ -273,22 +266,21 @@ async def create_api_key(
         user_id=request.user_id,
         name=request.name,
         environment=request.environment,
-        expires_in_days=request.expires_in_days
+        expires_in_days=request.expires_in_days,
     )
 
     return {
         "success": True,
         "data": {
             "api_key": api_key,
-            "message": "Save this key - it cannot be retrieved again!"
-        }
+            "message": "Save this key - it cannot be retrieved again!",
+        },
     }
 
 
 @router.post("/api/admin/api-keys/{key_id}/revoke")
 async def revoke_api_key(
-    key_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    key_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Revoke an API key"""
     await verify_admin(x_api_key)
@@ -296,8 +288,7 @@ async def revoke_api_key(
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            "UPDATE api_keys SET is_active = false WHERE id = $1",
-            key_id
+            "UPDATE api_keys SET is_active = false WHERE id = $1", key_id
         )
 
     return {"success": True, "message": "API key revoked"}
@@ -330,21 +321,22 @@ async def list_database_assignments(
 @router.post("/api/admin/database-assignments")
 async def assign_database(
     request: AssignDatabaseRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Assign a database to a user"""
     await verify_admin(x_api_key)
 
     # SECURITY: Prevent assigning master_db to users
     # The master_db contains sensitive user data and should never be accessible to regular users
-    if request.database_name.lower() == 'master_db':
+    if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot assign master_db to users. The master database contains sensitive system data and is reserved for administrative use only."
+            detail="Cannot assign master_db to users. The master database contains sensitive system data and is reserved for administrative use only.",
         )
 
     # Encrypt the connection string
     from cryptography.fernet import Fernet
+
     cipher = Fernet(settings.encryption_key.encode())
     encrypted_connection_string = cipher.encrypt(
         request.connection_string.encode()
@@ -368,16 +360,14 @@ async def assign_database(
         except Exception as e:
             if "unique" in str(e).lower():
                 raise HTTPException(
-                    status_code=400,
-                    detail="User already has access to this database"
+                    status_code=400, detail="User already has access to this database"
                 )
             raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.delete("/api/admin/database-assignments/{assignment_id}")
 async def remove_database_assignment(
-    assignment_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    assignment_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Remove a database assignment"""
     await verify_admin(x_api_key)
@@ -385,8 +375,7 @@ async def remove_database_assignment(
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM database_assignments WHERE id = $1",
-            assignment_id
+            "DELETE FROM database_assignments WHERE id = $1", assignment_id
         )
 
     return {"success": True, "message": "Database assignment removed"}
@@ -396,7 +385,7 @@ async def remove_database_assignment(
 @router.get("/api/admin/permissions")
 async def list_permissions(
     user_id: Optional[str] = None,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """List all schema permissions"""
     await verify_admin(x_api_key)
@@ -424,23 +413,22 @@ async def list_permissions(
 @router.post("/api/admin/permissions")
 async def grant_permission(
     request: GrantPermissionRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Grant schema permission to a user"""
     await verify_admin(x_api_key)
 
     if request.permission not in ["read_only", "read_write"]:
         raise HTTPException(
-            status_code=400,
-            detail="Permission must be 'read_only' or 'read_write'"
+            status_code=400, detail="Permission must be 'read_only' or 'read_write'"
         )
 
     # SECURITY: Prevent granting permissions on master_db
     # The master_db contains sensitive user data and should never be accessible to regular users
-    if request.database_name.lower() == 'master_db':
+    if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only."
+            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
         )
 
     pool = await db_manager.get_master_pool()
@@ -467,8 +455,7 @@ async def grant_permission(
             from lib.permission_granter import permission_granter
 
             pg_username = await pg_user_manager.get_pg_username(
-                request.user_id,
-                request.database_name
+                request.user_id, request.database_name
             )
 
             if pg_username:
@@ -480,26 +467,28 @@ async def grant_permission(
                     WHERE user_id = $1 AND database_name = $2
                     """,
                     request.user_id,
-                    request.database_name
+                    request.database_name,
                 )
 
                 if not db_assignment:
                     raise HTTPException(
                         status_code=400,
-                        detail=f"User does not have access to database {request.database_name}"
+                        detail=f"User does not have access to database {request.database_name}",
                     )
 
                 # Get admin connection string for the database server
                 from cryptography.fernet import Fernet
+
                 cipher = Fernet(settings.encryption_key.encode())
 
                 # For now, we'll get the admin connection from database_servers table
                 # First, extract the host from user's connection string to find the server
                 user_conn_str = cipher.decrypt(
-                    db_assignment['connection_string_encrypted'].encode()
+                    db_assignment["connection_string_encrypted"].encode()
                 ).decode()
 
                 from urllib.parse import urlparse
+
                 parsed = urlparse(user_conn_str)
                 host = parsed.hostname
 
@@ -511,13 +500,13 @@ async def grant_permission(
                     WHERE host = $1 AND is_active = true
                     LIMIT 1
                     """,
-                    host
+                    host,
                 )
 
                 if server:
                     # Decrypt admin password
                     admin_password = cipher.decrypt(
-                        server['admin_password_encrypted'].encode()
+                        server["admin_password_encrypted"].encode()
                     ).decode()
 
                     # Build admin connection string
@@ -528,16 +517,16 @@ async def grant_permission(
 
                     # Map permission level to actual permissions
                     permissions = {
-                        'can_select': True,
-                        'can_insert': request.permission == 'read_write',
-                        'can_update': request.permission == 'read_write',
-                        'can_delete': request.permission == 'read_write',
-                        'can_truncate': False,
-                        'can_references': False,
-                        'can_trigger': False,
-                        'can_create_table': False,
-                        'can_drop_table': False,
-                        'can_alter_table': False
+                        "can_select": True,
+                        "can_insert": request.permission == "read_write",
+                        "can_update": request.permission == "read_write",
+                        "can_delete": request.permission == "read_write",
+                        "can_truncate": False,
+                        "can_references": False,
+                        "can_trigger": False,
+                        "can_create_table": False,
+                        "can_drop_table": False,
+                        "can_alter_table": False,
                     }
 
                     # Grant the permissions on the PostgreSQL database
@@ -548,7 +537,7 @@ async def grant_permission(
                         schema_name=request.schema_name,
                         permissions=permissions,
                         apply_to_existing=True,
-                        apply_to_future=True
+                        apply_to_future=True,
                     )
 
             return {"success": True, "message": "Permission granted successfully"}
@@ -556,6 +545,7 @@ async def grant_permission(
             raise
         except Exception as e:
             import structlog
+
             logger = structlog.get_logger()
             await logger.aerror("grant_permission_failed", error=str(e))
             raise HTTPException(status_code=500, detail=str(e))
@@ -563,8 +553,7 @@ async def grant_permission(
 
 @router.delete("/api/admin/permissions/{permission_id}")
 async def revoke_permission(
-    permission_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    permission_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Revoke a schema permission"""
     await verify_admin(x_api_key)
@@ -572,8 +561,7 @@ async def revoke_permission(
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
         await conn.execute(
-            "DELETE FROM schema_permissions WHERE id = $1",
-            permission_id
+            "DELETE FROM schema_permissions WHERE id = $1", permission_id
         )
 
     return {"success": True, "message": "Permission revoked"}
@@ -584,7 +572,7 @@ async def revoke_permission(
 async def list_pg_users(
     user_id: Optional[str] = None,
     database_name: Optional[str] = None,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """List PostgreSQL database users"""
     await verify_admin(x_api_key)
@@ -620,7 +608,7 @@ async def list_pg_users(
 @router.post("/api/admin/pg-users")
 async def create_pg_user(
     request: CreatePgUserRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Create a PostgreSQL user for a Vibe user"""
     admin_info = await verify_admin(x_api_key)
@@ -630,16 +618,16 @@ async def create_pg_user(
             vibe_user_id=request.user_id,
             database_name=request.database_name,
             admin_connection_string=request.admin_connection_string,
-            created_by_user_id=admin_info['user_id'],
-            notes=request.notes
+            created_by_user_id=admin_info["user_id"],
+            notes=request.notes,
         )
 
         return {
             "success": True,
             "data": {
-                "pg_username": result['pg_username'],
-                "message": "PostgreSQL user created successfully"
-            }
+                "pg_username": result["pg_username"],
+                "message": "PostgreSQL user created successfully",
+            },
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -649,7 +637,7 @@ async def create_pg_user(
 async def drop_pg_user(
     user_id: str,
     database_name: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Drop a PostgreSQL user - automatically finds admin credentials"""
     await verify_admin(x_api_key)
@@ -665,7 +653,7 @@ async def drop_pg_user(
                 WHERE vibe_user_id = $1 AND database_name = $2 AND is_active = true
                 """,
                 user_id,
-                database_name
+                database_name,
             )
 
             if not pg_user_row:
@@ -677,7 +665,9 @@ async def drop_pg_user(
             from urllib.parse import urlparse
 
             fernet = Fernet(settings.encryption_key.encode())
-            user_conn_string = fernet.decrypt(pg_user_row['connection_string_encrypted'].encode()).decode()
+            user_conn_string = fernet.decrypt(
+                pg_user_row["connection_string_encrypted"].encode()
+            ).decode()
             parsed = urlparse(user_conn_string)
             host = parsed.hostname
             port = parsed.port or 5432
@@ -690,28 +680,30 @@ async def drop_pg_user(
                 WHERE host = $1 AND port = $2 AND is_active = true
                 """,
                 host,
-                port
+                port,
             )
 
             if not server_row:
                 raise HTTPException(
                     status_code=404,
-                    detail=f"No database server credentials found for {host}:{port}"
+                    detail=f"No database server credentials found for {host}:{port}",
                 )
 
             # Decrypt admin password
-            admin_password = fernet.decrypt(server_row['admin_password_encrypted'].encode()).decode()
+            admin_password = fernet.decrypt(
+                server_row["admin_password_encrypted"].encode()
+            ).decode()
 
             # Build admin connection string
-            db_name = parsed.path.lstrip('/')
-            ssl_mode = server_row['ssl_mode'] or 'require'
+            db_name = parsed.path.lstrip("/")
+            ssl_mode = server_row["ssl_mode"] or "require"
             admin_connection_string = f"postgresql://{server_row['admin_username']}:{admin_password}@{host}:{port}/{db_name}?sslmode={ssl_mode}"
 
         # Now drop the PG user
         success = await pg_user_manager.drop_pg_user(
             vibe_user_id=user_id,
             database_name=database_name,
-            admin_connection_string=admin_connection_string
+            admin_connection_string=admin_connection_string,
         )
 
         if success:
@@ -721,7 +713,12 @@ async def drop_pg_user(
     except HTTPException:
         raise
     except Exception as e:
-        await logger.aerror("drop_pg_user_failed", user_id=user_id, database_name=database_name, error=str(e))
+        await logger.aerror(
+            "drop_pg_user_failed",
+            user_id=user_id,
+            database_name=database_name,
+            error=str(e),
+        )
         raise HTTPException(status_code=500, detail=str(e))
 
 
@@ -730,7 +727,7 @@ async def drop_pg_user(
 async def list_table_permissions(
     user_id: Optional[str] = None,
     database_name: Optional[str] = None,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """List table-level permissions"""
     await verify_admin(x_api_key)
@@ -768,27 +765,27 @@ async def list_table_permissions(
 @router.post("/api/admin/table-permissions")
 async def grant_table_permission(
     request: GrantTablePermissionRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Grant table-level permissions"""
     admin_info = await verify_admin(x_api_key)
 
     # SECURITY: Prevent granting permissions on master_db
-    if request.database_name.lower() == 'master_db':
+    if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only."
+            detail="Cannot grant permissions on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
         )
 
     try:
         permissions = {
-            'can_select': request.can_select,
-            'can_insert': request.can_insert,
-            'can_update': request.can_update,
-            'can_delete': request.can_delete,
-            'can_truncate': request.can_truncate,
-            'can_references': request.can_references,
-            'can_trigger': request.can_trigger
+            "can_select": request.can_select,
+            "can_insert": request.can_insert,
+            "can_update": request.can_update,
+            "can_delete": request.can_delete,
+            "can_truncate": request.can_truncate,
+            "can_references": request.can_references,
+            "can_trigger": request.can_trigger,
         }
 
         await permission_granter.grant_table_permissions(
@@ -798,7 +795,7 @@ async def grant_table_permission(
             schema_name=request.schema_name,
             table_name=request.table_name,
             permissions=permissions,
-            column_permissions=request.column_permissions
+            column_permissions=request.column_permissions,
         )
 
         return {"success": True, "message": "Table permissions granted successfully"}
@@ -808,18 +805,14 @@ async def grant_table_permission(
 
 @router.delete("/api/admin/table-permissions/{permission_id}")
 async def revoke_table_permission(
-    permission_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    permission_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Revoke table-level permissions"""
     await verify_admin(x_api_key)
 
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
-        await conn.execute(
-            "DELETE FROM table_permissions WHERE id = $1",
-            permission_id
-        )
+        await conn.execute("DELETE FROM table_permissions WHERE id = $1", permission_id)
 
     return {"success": True, "message": "Table permission revoked"}
 
@@ -830,7 +823,7 @@ async def list_rls_policies(
     user_id: Optional[str] = None,
     database_name: Optional[str] = None,
     table_name: Optional[str] = None,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """List RLS policies"""
     await verify_admin(x_api_key)
@@ -872,16 +865,16 @@ async def list_rls_policies(
 @router.post("/api/admin/rls-policies")
 async def create_rls_policy(
     request: CreateRlsPolicyRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Create an RLS policy"""
     admin_info = await verify_admin(x_api_key)
 
     # SECURITY: Prevent creating RLS policies on master_db
-    if request.database_name.lower() == 'master_db':
+    if request.database_name.lower() == "master_db":
         raise HTTPException(
             status_code=403,
-            detail="Cannot create RLS policies on master_db. The master database contains sensitive system data and is reserved for administrative use only."
+            detail="Cannot create RLS policies on master_db. The master database contains sensitive system data and is reserved for administrative use only.",
         )
 
     try:
@@ -897,7 +890,7 @@ async def create_rls_policy(
             with_check_expression=request.with_check_expression,
             command_type=request.command_type,
             template_used=request.template_used,
-            notes=request.notes
+            notes=request.notes,
         )
 
         return {"success": True, "message": "RLS policy created successfully"}
@@ -909,15 +902,14 @@ async def create_rls_policy(
 async def drop_rls_policy(
     policy_id: str,
     admin_connection_string: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Drop an RLS policy"""
     await verify_admin(x_api_key)
 
     try:
         success = await permission_granter.drop_rls_policy(
-            policy_id=policy_id,
-            admin_connection_string=admin_connection_string
+            policy_id=policy_id, admin_connection_string=admin_connection_string
         )
 
         if success:
@@ -980,13 +972,14 @@ async def list_database_servers(
 @router.post("/api/admin/database-servers")
 async def create_database_server(
     request: CreateDatabaseServerRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Create a new database server configuration"""
     await verify_admin(x_api_key)
 
     # Encrypt the admin password
     from cryptography.fernet import Fernet
+
     cipher = Fernet(settings.encryption_key.encode())
     encrypted_password = cipher.encrypt(request.admin_password.encode()).decode()
 
@@ -1007,29 +1000,27 @@ async def create_database_server(
                 request.admin_username,
                 encrypted_password,
                 request.ssl_mode,
-                request.notes
+                request.notes,
             )
 
             return {
                 "success": True,
                 "data": {
                     "server_id": str(server_id),
-                    "server_name": request.server_name
-                }
+                    "server_name": request.server_name,
+                },
             }
         except Exception as e:
             if "unique" in str(e).lower():
                 raise HTTPException(
-                    status_code=400,
-                    detail="Server name already exists"
+                    status_code=400, detail="Server name already exists"
                 )
             raise HTTPException(status_code=500, detail=str(e))
 
 
 @router.get("/api/admin/database-servers/{server_id}/databases")
 async def list_databases_on_server(
-    server_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    server_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """List all databases on a database server"""
     await verify_admin(x_api_key)
@@ -1046,7 +1037,7 @@ async def list_databases_on_server(
                 FROM database_servers
                 WHERE id = $1 AND is_active = true
                 """,
-                server_id
+                server_id,
             )
 
             if not row:
@@ -1055,11 +1046,13 @@ async def list_databases_on_server(
             # Decrypt password
             try:
                 cipher = Fernet(settings.encryption_key.encode())
-                admin_password = cipher.decrypt(row['admin_password_encrypted'].encode()).decode()
+                admin_password = cipher.decrypt(
+                    row["admin_password_encrypted"].encode()
+                ).decode()
             except InvalidToken:
                 raise HTTPException(
                     status_code=500,
-                    detail="Failed to decrypt database credentials. The encryption key may have changed. Please re-save the database server credentials."
+                    detail="Failed to decrypt database credentials. The encryption key may have changed. Please re-save the database server credentials.",
                 )
 
         # Connect to postgres database to list all databases
@@ -1083,25 +1076,20 @@ async def list_databases_on_server(
 
         await db_conn.close()
 
-        database_list = [db['datname'] for db in databases]
+        database_list = [db["datname"] for db in databases]
 
-        return {
-            "success": True,
-            "data": database_list
-        }
+        return {"success": True, "data": database_list}
     except HTTPException:
         raise
     except Exception as e:
         import structlog
+
         logger = structlog.get_logger()
         await logger.aerror(
-            "failed_to_list_databases",
-            server_id=server_id,
-            error=str(e)
+            "failed_to_list_databases", server_id=server_id, error=str(e)
         )
         raise HTTPException(
-            status_code=500,
-            detail=f"Failed to connect to database server: {str(e)}"
+            status_code=500, detail=f"Failed to connect to database server: {str(e)}"
         )
 
 
@@ -1109,7 +1097,7 @@ async def list_databases_on_server(
 async def get_database_server_connection_string(
     server_id: str,
     database_name: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Get the full admin connection string for a database server"""
     await verify_admin(x_api_key)
@@ -1122,7 +1110,7 @@ async def get_database_server_connection_string(
             FROM database_servers
             WHERE id = $1 AND is_active = true
             """,
-            server_id
+            server_id,
         )
 
         if not row:
@@ -1130,8 +1118,11 @@ async def get_database_server_connection_string(
 
         # Decrypt password
         from cryptography.fernet import Fernet
+
         cipher = Fernet(settings.encryption_key.encode())
-        admin_password = cipher.decrypt(row['admin_password_encrypted'].encode()).decode()
+        admin_password = cipher.decrypt(
+            row["admin_password_encrypted"].encode()
+        ).decode()
 
         # Build connection string
         connection_string = (
@@ -1143,10 +1134,10 @@ async def get_database_server_connection_string(
             "success": True,
             "data": {
                 "connection_string": connection_string,
-                "host": row['host'],
-                "port": row['port'],
-                "username": row['admin_username']
-            }
+                "host": row["host"],
+                "port": row["port"],
+                "username": row["admin_username"],
+            },
         }
 
 
@@ -1154,7 +1145,7 @@ async def get_database_server_connection_string(
 async def update_database_server(
     server_id: str,
     request: UpdateDatabaseServerRequest,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
 ):
     """Update database server configuration"""
     await verify_admin(x_api_key)
@@ -1188,8 +1179,11 @@ async def update_database_server(
 
         if request.admin_password is not None:
             from cryptography.fernet import Fernet
+
             cipher = Fernet(settings.encryption_key.encode())
-            encrypted_password = cipher.encrypt(request.admin_password.encode()).decode()
+            encrypted_password = cipher.encrypt(
+                request.admin_password.encode()
+            ).decode()
             param_count += 1
             updates.append(f"admin_password_encrypted = ${param_count}")
             params.append(encrypted_password)
@@ -1222,8 +1216,7 @@ async def update_database_server(
 
 @router.delete("/api/admin/database-servers/{server_id}")
 async def delete_database_server(
-    server_id: str,
-    x_api_key: Optional[str] = Header(None, alias="X-API-Key")
+    server_id: str, x_api_key: Optional[str] = Header(None, alias="X-API-Key")
 ):
     """Delete a database server completely"""
     await verify_admin(x_api_key)
@@ -1231,9 +1224,6 @@ async def delete_database_server(
     pool = await db_manager.get_master_pool()
     async with pool.acquire() as conn:
         # Actually delete the server record (not soft delete)
-        await conn.execute(
-            "DELETE FROM database_servers WHERE id = $1",
-            server_id
-        )
+        await conn.execute("DELETE FROM database_servers WHERE id = $1", server_id)
 
     return {"success": True, "message": "Database server deleted"}

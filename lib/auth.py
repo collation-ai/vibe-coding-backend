@@ -90,15 +90,15 @@ class AuthManager:
                 await logger.awarning(
                     "account_locked",
                     user_id=str(row["user_id"]),
-                    locked_until=row["locked_until"].isoformat()
+                    locked_until=row["locked_until"].isoformat(),
                 )
                 return None
 
             # Check if password has expired (only affects UI login, not API keys)
             # API keys continue to work even if password expired
             password_expired = (
-                row["password_expires_at"] and
-                row["password_expires_at"] < datetime.utcnow()
+                row["password_expires_at"]
+                and row["password_expires_at"] < datetime.utcnow()
             )
 
             # Update last used timestamp

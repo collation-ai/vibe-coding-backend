@@ -25,7 +25,7 @@ class EmailService:
         subject: str,
         html_body: str,
         user_id: Optional[str] = None,
-        email_type: str = "general"
+        email_type: str = "general",
     ) -> bool:
         """
         Send an email using Azure Communication Services
@@ -42,9 +42,7 @@ class EmailService:
         """
         if not self.enabled:
             await logger.awarning(
-                "email_service_not_configured",
-                to_email=to_email,
-                subject=subject
+                "email_service_not_configured", to_email=to_email, subject=subject
             )
             # Log to database even if not sent
             await self._log_email(
@@ -53,7 +51,7 @@ class EmailService:
                 body=html_body,
                 user_id=user_id,
                 email_type=email_type,
-                error_message="Email service not configured"
+                error_message="Email service not configured",
             )
             return False
 
@@ -71,7 +69,7 @@ class EmailService:
                 "content": {
                     "subject": subject,
                     "html": html_body,
-                }
+                },
             }
 
             poller = client.begin_send(message)
@@ -81,8 +79,8 @@ class EmailService:
                 "email_sent",
                 to_email=to_email,
                 subject=subject,
-                message_id=result.get('id'),
-                email_type=email_type
+                message_id=result.get("id"),
+                email_type=email_type,
             )
 
             # Log successful send
@@ -92,7 +90,7 @@ class EmailService:
                 body=html_body,
                 user_id=user_id,
                 email_type=email_type,
-                message_id=result.get('id')
+                message_id=result.get("id"),
             )
 
             return True
@@ -103,7 +101,7 @@ class EmailService:
                 to_email=to_email,
                 subject=subject,
                 error=str(e),
-                email_type=email_type
+                email_type=email_type,
             )
 
             # Log failed send
@@ -114,7 +112,7 @@ class EmailService:
                 user_id=user_id,
                 email_type=email_type,
                 error_message=str(e),
-                failed=True
+                failed=True,
             )
 
             return False
@@ -128,7 +126,7 @@ class EmailService:
         email_type: str,
         message_id: Optional[str] = None,
         error_message: Optional[str] = None,
-        failed: bool = False
+        failed: bool = False,
     ):
         """Log email to database"""
         try:
@@ -146,10 +144,10 @@ class EmailService:
                     email_type,
                     subject,
                     body,
-                    None if failed else 'NOW()',
-                    'NOW()' if failed else None,
+                    None if failed else "NOW()",
+                    "NOW()" if failed else None,
                     error_message,
-                    message_id
+                    message_id,
                 )
         except Exception as e:
             await logger.aerror("email_log_failed", error=str(e))
@@ -159,7 +157,7 @@ class EmailService:
         to_email: str,
         reset_token: str,
         user_id: str,
-        user_name: Optional[str] = None
+        user_name: Optional[str] = None,
     ) -> bool:
         """
         Send password reset email
@@ -241,7 +239,7 @@ class EmailService:
             subject=subject,
             html_body=html_body,
             user_id=user_id,
-            email_type="password_reset"
+            email_type="password_reset",
         )
 
     async def send_password_expiry_warning(
@@ -249,7 +247,7 @@ class EmailService:
         to_email: str,
         user_id: str,
         days_until_expiry: int,
-        user_name: Optional[str] = None
+        user_name: Optional[str] = None,
     ) -> bool:
         """Send password expiry warning email"""
         subject = f"⚠️ Your password expires in {days_until_expiry} days"
@@ -309,7 +307,7 @@ class EmailService:
             subject=subject,
             html_body=html_body,
             user_id=user_id,
-            email_type="password_expiry_warning"
+            email_type="password_expiry_warning",
         )
 
 

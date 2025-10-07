@@ -33,7 +33,7 @@ async def check_expiring_passwords():
             )
 
             for user in users:
-                days_until_expiry = user['days_until_expiry']
+                days_until_expiry = user["days_until_expiry"]
 
                 # Send warning at specific intervals
                 should_send = days_until_expiry in [14, 7, 3, 1]
@@ -50,22 +50,22 @@ async def check_expiring_passwords():
                         ORDER BY created_at DESC
                         LIMIT 1
                         """,
-                        user['user_id']
+                        user["user_id"],
                     )
 
                     if not last_warning:
                         # Send warning email
                         await email_service.send_password_expiry_warning(
-                            to_email=user['email'],
-                            user_id=str(user['user_id']),
-                            days_until_expiry=days_until_expiry
+                            to_email=user["email"],
+                            user_id=str(user["user_id"]),
+                            days_until_expiry=days_until_expiry,
                         )
 
                         await logger.ainfo(
                             "password_expiry_warning_sent",
-                            user_id=str(user['user_id']),
-                            email=user['email'],
-                            days_until_expiry=days_until_expiry
+                            user_id=str(user["user_id"]),
+                            email=user["email"],
+                            days_until_expiry=days_until_expiry,
                         )
 
             # Handle expired passwords
@@ -88,27 +88,24 @@ async def check_expiring_passwords():
                         updated_at = NOW()
                     WHERE id = $1
                     """,
-                    user['id']
+                    user["id"],
                 )
 
                 await logger.ainfo(
                     "password_expired_reset_required",
-                    user_id=str(user['id']),
-                    email=user['email'],
-                    expired_at=user['password_expires_at'].isoformat()
+                    user_id=str(user["id"]),
+                    email=user["email"],
+                    expired_at=user["password_expires_at"].isoformat(),
                 )
 
             await logger.ainfo(
                 "password_expiry_check_complete",
                 users_with_expiring_passwords=len(users),
-                users_with_expired_passwords=len(expired_users)
+                users_with_expired_passwords=len(expired_users),
             )
 
     except Exception as e:
-        await logger.aerror(
-            "password_expiry_check_error",
-            error=str(e)
-        )
+        await logger.aerror("password_expiry_check_error", error=str(e))
 
 
 async def run_password_expiry_job():

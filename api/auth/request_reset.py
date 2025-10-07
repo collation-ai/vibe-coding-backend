@@ -26,10 +26,7 @@ class PasswordResetResponse(BaseModel):
 
 
 @router.post("/request-password-reset", response_model=PasswordResetResponse)
-async def request_password_reset(
-    request_data: PasswordResetRequest,
-    request: Request
-):
+async def request_password_reset(request_data: PasswordResetRequest, request: Request):
     """
     Request a password reset email
 
@@ -47,29 +44,28 @@ async def request_password_reset(
                 FROM users
                 WHERE email = $1
                 """,
-                request_data.email
+                request_data.email,
             )
 
             # Always return success to prevent email enumeration
             if not user:
                 await logger.ainfo(
-                    "password_reset_request_unknown_email",
-                    email=request_data.email
+                    "password_reset_request_unknown_email", email=request_data.email
                 )
                 return PasswordResetResponse(
                     success=True,
-                    message="If an account exists with that email, a reset link has been sent."
+                    message="If an account exists with that email, a reset link has been sent.",
                 )
 
-            if not user['is_active']:
+            if not user["is_active"]:
                 await logger.awarning(
                     "password_reset_request_inactive_user",
-                    user_id=str(user['id']),
-                    email=request_data.email
+                    user_id=str(user["id"]),
+                    email=request_data.email,
                 )
                 return PasswordResetResponse(
                     success=True,
-                    message="If an account exists with that email, a reset link has been sent."
+                    message="If an account exists with that email, a reset link has been sent.",
                 )
 
             # Generate secure reset token (32 bytes = 256 bits)
@@ -94,50 +90,48 @@ async def request_password_reset(
                 (user_id, token_hash, email, expires_at, ip_address, user_agent)
                 VALUES ($1, $2, $3, $4, $5, $6)
                 """,
-                user['id'],
+                user["id"],
                 token_hash,
-                user['email'],
+                user["email"],
                 expires_at,
                 ip_address,
-                user_agent
+                user_agent,
             )
 
             # Send reset email
             email_sent = await email_service.send_password_reset_email(
-                to_email=user['email'],
+                to_email=user["email"],
                 reset_token=reset_token,  # Send actual token in email, not hash
-                user_id=str(user['id'])
+                user_id=str(user["id"]),
             )
 
             if email_sent:
                 await logger.ainfo(
                     "password_reset_email_sent",
-                    user_id=str(user['id']),
-                    email=user['email'],
-                    expires_at=expires_at.isoformat()
+                    user_id=str(user["id"]),
+                    email=user["email"],
+                    expires_at=expires_at.isoformat(),
                 )
             else:
                 await logger.aerror(
                     "password_reset_email_failed",
-                    user_id=str(user['id']),
-                    email=user['email']
+                    user_id=str(user["id"]),
+                    email=user["email"],
                 )
 
             return PasswordResetResponse(
                 success=True,
-                message="If an account exists with that email, a reset link has been sent."
+                message="If an account exists with that email, a reset link has been sent.",
             )
 
     except Exception as e:
         await logger.aerror(
-            "password_reset_request_error",
-            error=str(e),
-            email=request_data.email
+            "password_reset_request_error", error=str(e), email=request_data.email
         )
         # Don't expose internal errors
         return PasswordResetResponse(
             success=True,
-            message="If an account exists with that email, a reset link has been sent."
+            message="If an account exists with that email, a reset link has been sent.",
         )
 
 

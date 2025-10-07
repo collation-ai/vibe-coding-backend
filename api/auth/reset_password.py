@@ -18,16 +18,16 @@ class ResetPasswordRequest(BaseModel):
     token: str
     new_password: str
 
-    @validator('new_password')
+    @validator("new_password")
     def validate_password(cls, v):
         if len(v) < 8:
-            raise ValueError('Password must be at least 8 characters')
+            raise ValueError("Password must be at least 8 characters")
         if not any(c.isupper() for c in v):
-            raise ValueError('Password must contain at least one uppercase letter')
+            raise ValueError("Password must contain at least one uppercase letter")
         if not any(c.islower() for c in v):
-            raise ValueError('Password must contain at least one lowercase letter')
+            raise ValueError("Password must contain at least one lowercase letter")
         if not any(c.isdigit() for c in v):
-            raise ValueError('Password must contain at least one digit')
+            raise ValueError("Password must contain at least one digit")
         return v
 
 
@@ -59,41 +59,39 @@ async def reset_password(request_data: ResetPasswordRequest):
                 FROM password_reset_tokens
                 WHERE token_hash = $1
                 """,
-                token_hash
+                token_hash,
             )
 
             if not token_record:
                 await logger.awarning(
                     "password_reset_invalid_token",
-                    token_hash=token_hash[:16] + "..."  # Log partial hash
+                    token_hash=token_hash[:16] + "...",  # Log partial hash
                 )
                 raise HTTPException(
-                    status_code=400,
-                    detail="Invalid or expired reset token"
+                    status_code=400, detail="Invalid or expired reset token"
                 )
 
             # Check if token already used
-            if token_record['used_at']:
+            if token_record["used_at"]:
                 await logger.awarning(
                     "password_reset_token_reuse_attempt",
-                    user_id=str(token_record['user_id']),
-                    used_at=token_record['used_at'].isoformat()
+                    user_id=str(token_record["user_id"]),
+                    used_at=token_record["used_at"].isoformat(),
                 )
                 raise HTTPException(
-                    status_code=400,
-                    detail="This reset token has already been used"
+                    status_code=400, detail="This reset token has already been used"
                 )
 
             # Check if token expired
-            if datetime.utcnow() > token_record['expires_at']:
+            if datetime.utcnow() > token_record["expires_at"]:
                 await logger.awarning(
                     "password_reset_token_expired",
-                    user_id=str(token_record['user_id']),
-                    expired_at=token_record['expires_at'].isoformat()
+                    user_id=str(token_record["user_id"]),
+                    expired_at=token_record["expires_at"].isoformat(),
                 )
                 raise HTTPException(
                     status_code=400,
-                    detail="Reset token has expired. Please request a new one."
+                    detail="Reset token has expired. Please request a new one.",
                 )
 
             # Get user's current password for history
@@ -103,20 +101,19 @@ async def reset_password(request_data: ResetPasswordRequest):
                 FROM users
                 WHERE id = $1
                 """,
-                token_record['user_id']
+                token_record["user_id"],
             )
 
-            if not user or not user['is_active']:
+            if not user or not user["is_active"]:
                 raise HTTPException(
-                    status_code=400,
-                    detail="User account not found or inactive"
+                    status_code=400, detail="User account not found or inactive"
                 )
 
             # Check if new password matches current password
-            if user['password_hash'] == hash_password(request_data.new_password):
+            if user["password_hash"] == hash_password(request_data.new_password):
                 raise HTTPException(
                     status_code=400,
-                    detail="New password cannot be the same as current password"
+                    detail="New password cannot be the same as current password",
                 )
 
             # Check password history (prevent reuse of last 5 passwords)
@@ -128,15 +125,15 @@ async def reset_password(request_data: ResetPasswordRequest):
                 ORDER BY created_at DESC
                 LIMIT 5
                 """,
-                user['id']
+                user["id"],
             )
 
             new_password_hash = hash_password(request_data.new_password)
             for old_password in password_history:
-                if old_password['password_hash'] == new_password_hash:
+                if old_password["password_hash"] == new_password_hash:
                     raise HTTPException(
                         status_code=400,
-                        detail="Cannot reuse a recent password. Please choose a different one."
+                        detail="Cannot reuse a recent password. Please choose a different one.",
                     )
 
             # Start transaction for password update
@@ -147,8 +144,8 @@ async def reset_password(request_data: ResetPasswordRequest):
                     INSERT INTO password_history (user_id, password_hash)
                     VALUES ($1, $2)
                     """,
-                    user['id'],
-                    user['password_hash']
+                    user["id"],
+                    user["password_hash"],
                 )
 
                 # Update user's password
@@ -165,7 +162,7 @@ async def reset_password(request_data: ResetPasswordRequest):
                     WHERE id = $2
                     """,
                     new_password_hash,
-                    user['id']
+                    user["id"],
                 )
 
                 # Mark token as used
@@ -175,30 +172,25 @@ async def reset_password(request_data: ResetPasswordRequest):
                     SET used_at = NOW()
                     WHERE id = $1
                     """,
-                    token_record['id']
+                    token_record["id"],
                 )
 
             await logger.ainfo(
                 "password_reset_successful",
-                user_id=str(user['id']),
-                email=token_record['email']
+                user_id=str(user["id"]),
+                email=token_record["email"],
             )
 
             return ResetPasswordResponse(
-                success=True,
-                message="Password has been reset successfully"
+                success=True, message="Password has been reset successfully"
             )
 
     except HTTPException:
         raise
     except Exception as e:
-        await logger.aerror(
-            "password_reset_error",
-            error=str(e)
-        )
+        await logger.aerror("password_reset_error", error=str(e))
         raise HTTPException(
-            status_code=500,
-            detail="Failed to reset password. Please try again."
+            status_code=500, detail="Failed to reset password. Please try again."
         )
 
 

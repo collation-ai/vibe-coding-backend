@@ -31,9 +31,8 @@ class PostgreSQLUserManager:
         """
         # Username: vibe_user_<12 random chars>
         # Using lowercase + digits to ensure PostgreSQL compatibility
-        random_suffix = ''.join(
-            secrets.choice(string.ascii_lowercase + string.digits)
-            for _ in range(12)
+        random_suffix = "".join(
+            secrets.choice(string.ascii_lowercase + string.digits) for _ in range(12)
         )
         username = f"vibe_user_{random_suffix}"
 
@@ -52,10 +51,7 @@ class PostgreSQLUserManager:
         return self.fernet.decrypt(encrypted_value.encode()).decode()
 
     def build_connection_string(
-        self,
-        base_connection_string: str,
-        pg_username: str,
-        pg_password: str
+        self, base_connection_string: str, pg_username: str, pg_password: str
     ) -> str:
         """
         Build a new connection string with specific user credentials
@@ -86,7 +82,7 @@ class PostgreSQLUserManager:
         database_name: str,
         admin_connection_string: str,
         created_by_user_id: Optional[str] = None,
-        notes: Optional[str] = None
+        notes: Optional[str] = None,
     ) -> Dict[str, str]:
         """
         Create a PostgreSQL user in the target database
@@ -107,7 +103,7 @@ class PostgreSQLUserManager:
         """
         # SECURITY: Prevent creating PostgreSQL users on master_db
         # The master_db contains sensitive user data and should never be accessible to regular users
-        if database_name.lower() == 'master_db':
+        if database_name.lower() == "master_db":
             raise ValueError(
                 "Cannot create PostgreSQL user on master_db. "
                 "The master database contains sensitive system data and is reserved for administrative use only."
@@ -121,17 +117,13 @@ class PostgreSQLUserManager:
         try:
             # Connect to target database with admin credentials
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2,
-                command_timeout=30
+                admin_connection_string, min_size=1, max_size=2, command_timeout=30
             )
 
             async with admin_pool.acquire() as conn:
                 # Check if user already exists
                 existing = await conn.fetchval(
-                    "SELECT 1 FROM pg_user WHERE usename = $1",
-                    pg_username
+                    "SELECT 1 FROM pg_user WHERE usename = $1", pg_username
                 )
 
                 if existing:
@@ -145,7 +137,7 @@ class PostgreSQLUserManager:
                 )
 
                 # Grant CONNECT privilege on database
-                db_name = urlparse(admin_connection_string).path.lstrip('/')
+                db_name = urlparse(admin_connection_string).path.lstrip("/")
                 await conn.execute(
                     f'GRANT CONNECT ON DATABASE "{db_name}" TO "{pg_username}"'
                 )
@@ -154,16 +146,14 @@ class PostgreSQLUserManager:
                     "pg_user_created",
                     vibe_user_id=vibe_user_id,
                     pg_username=pg_username,
-                    database=database_name
+                    database=database_name,
                 )
 
             await admin_pool.close()
 
             # Build new connection string with user credentials
             new_connection_string = self.build_connection_string(
-                admin_connection_string,
-                pg_username,
-                pg_password
+                admin_connection_string, pg_username, pg_password
             )
 
             # Store in master_db
@@ -183,7 +173,7 @@ class PostgreSQLUserManager:
                     self.encrypt(pg_password),
                     self.encrypt(new_connection_string),
                     created_by_user_id,
-                    notes
+                    notes,
                 )
 
                 # Also create database_assignments entry so user can access the database
@@ -199,23 +189,22 @@ class PostgreSQLUserManager:
                         """,
                         vibe_user_id,
                         database_name,
-                        self.encrypt(new_connection_string)
+                        self.encrypt(new_connection_string),
                     )
                     await logger.ainfo(
                         "database_assignment_created",
                         vibe_user_id=vibe_user_id,
-                        database=database_name
+                        database=database_name,
                     )
                 except Exception as assign_error:
                     await logger.awarning(
-                        "database_assignment_creation_failed",
-                        error=str(assign_error)
+                        "database_assignment_creation_failed", error=str(assign_error)
                     )
 
             return {
                 "pg_username": pg_username,
                 "pg_password": pg_password,
-                "connection_string": new_connection_string
+                "connection_string": new_connection_string,
             }
 
         except Exception as e:
@@ -223,14 +212,12 @@ class PostgreSQLUserManager:
                 "pg_user_creation_failed",
                 vibe_user_id=vibe_user_id,
                 database=database_name,
-                error=str(e)
+                error=str(e),
             )
             raise
 
     async def get_pg_user_connection(
-        self,
-        vibe_user_id: str,
-        database_name: str
+        self, vibe_user_id: str, database_name: str
     ) -> Optional[str]:
         """
         Get the PostgreSQL connection string for a Vibe user
@@ -247,18 +234,16 @@ class PostgreSQLUserManager:
                 WHERE vibe_user_id = $1 AND database_name = $2
                 """,
                 vibe_user_id,
-                database_name
+                database_name,
             )
 
-            if not row or not row['is_active']:
+            if not row or not row["is_active"]:
                 return None
 
-            return self.decrypt(row['connection_string_encrypted'])
+            return self.decrypt(row["connection_string_encrypted"])
 
     async def get_pg_username(
-        self,
-        vibe_user_id: str,
-        database_name: str
+        self, vibe_user_id: str, database_name: str
     ) -> Optional[str]:
         """Get the PostgreSQL username for a Vibe user"""
         master_pool = await db_manager.get_master_pool()
@@ -270,14 +255,11 @@ class PostgreSQLUserManager:
                 WHERE vibe_user_id = $1 AND database_name = $2 AND is_active = true
                 """,
                 vibe_user_id,
-                database_name
+                database_name,
             )
 
     async def drop_pg_user(
-        self,
-        vibe_user_id: str,
-        database_name: str,
-        admin_connection_string: str
+        self, vibe_user_id: str, database_name: str, admin_connection_string: str
     ) -> bool:
         """
         Drop a PostgreSQL user and revoke all privileges
@@ -297,14 +279,13 @@ class PostgreSQLUserManager:
 
         try:
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
                 # Get admin username from connection string
                 from urllib.parse import urlparse
+
                 parsed = urlparse(admin_connection_string)
                 admin_username = parsed.username
 
@@ -323,7 +304,7 @@ class PostgreSQLUserManager:
                     await logger.awarning("drop_owned_failed", error=str(e))
 
                 # Revoke database privileges
-                db_name = parsed.path.lstrip('/')
+                db_name = parsed.path.lstrip("/")
                 try:
                     await conn.execute(
                         f'REVOKE ALL PRIVILEGES ON DATABASE "{db_name}" FROM "{pg_username}"'
@@ -338,7 +319,7 @@ class PostgreSQLUserManager:
                     "pg_user_dropped",
                     vibe_user_id=vibe_user_id,
                     pg_username=pg_username,
-                    database=database_name
+                    database=database_name,
                 )
 
             await admin_pool.close()
@@ -353,7 +334,7 @@ class PostgreSQLUserManager:
                     WHERE user_id = $1 AND database_name = $2
                     """,
                     vibe_user_id,
-                    database_name
+                    database_name,
                 )
 
                 # Delete PG user record
@@ -363,7 +344,7 @@ class PostgreSQLUserManager:
                     WHERE vibe_user_id = $1 AND database_name = $2
                     """,
                     vibe_user_id,
-                    database_name
+                    database_name,
                 )
 
             return True
@@ -373,15 +354,12 @@ class PostgreSQLUserManager:
                 "pg_user_drop_failed",
                 vibe_user_id=vibe_user_id,
                 pg_username=pg_username,
-                error=str(e)
+                error=str(e),
             )
             return False
 
     async def reset_pg_password(
-        self,
-        vibe_user_id: str,
-        database_name: str,
-        admin_connection_string: str
+        self, vibe_user_id: str, database_name: str, admin_connection_string: str
     ) -> Optional[str]:
         """
         Reset PostgreSQL user password
@@ -398,24 +376,19 @@ class PostgreSQLUserManager:
 
         try:
             admin_pool = await asyncpg.create_pool(
-                admin_connection_string,
-                min_size=1,
-                max_size=2
+                admin_connection_string, min_size=1, max_size=2
             )
 
             async with admin_pool.acquire() as conn:
                 await conn.execute(
-                    f'ALTER USER "{pg_username}" WITH PASSWORD $1',
-                    new_password
+                    f'ALTER USER "{pg_username}" WITH PASSWORD $1', new_password
                 )
 
             await admin_pool.close()
 
             # Update in master_db
             new_connection_string = self.build_connection_string(
-                admin_connection_string,
-                pg_username,
-                new_password
+                admin_connection_string, pg_username, new_password
             )
 
             master_pool = await db_manager.get_master_pool()
@@ -431,22 +404,18 @@ class PostgreSQLUserManager:
                     self.encrypt(new_password),
                     self.encrypt(new_connection_string),
                     vibe_user_id,
-                    database_name
+                    database_name,
                 )
 
             await logger.ainfo(
-                "pg_password_reset",
-                vibe_user_id=vibe_user_id,
-                pg_username=pg_username
+                "pg_password_reset", vibe_user_id=vibe_user_id, pg_username=pg_username
             )
 
             return new_password
 
         except Exception as e:
             await logger.aerror(
-                "pg_password_reset_failed",
-                vibe_user_id=vibe_user_id,
-                error=str(e)
+                "pg_password_reset_failed", vibe_user_id=vibe_user_id, error=str(e)
             )
             return None
 

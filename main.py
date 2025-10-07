@@ -96,16 +96,18 @@ async def admin_interface():
     """Serve admin interface"""
     return FileResponse("admin/index.html")
 
+
 @app.get("/admin.js", include_in_schema=False)
 async def admin_js():
     """Serve admin JavaScript (with cache busting)"""
     from fastapi.responses import Response
+
     with open("admin/admin.js", "r") as f:
         content = f.read()
     return Response(
         content=content,
         media_type="application/javascript",
-        headers={"Cache-Control": "no-cache, no-store, must-revalidate"}
+        headers={"Cache-Control": "no-cache, no-store, must-revalidate"},
     )
 
 
