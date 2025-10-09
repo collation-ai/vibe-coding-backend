@@ -1,0 +1,45 @@
+name: Deploy Azure Functions (Auth Gateway)
+
+on:
+  push:
+    branches:
+      - main
+      - vercel-update
+    paths:
+      - 'azure-auth-gateway/**'
+  workflow_dispatch:
+
+env:
+  AZURE_FUNCTIONAPP_NAME: vibe-auth-gateway
+  AZURE_FUNCTIONAPP_PACKAGE_PATH: './azure-auth-gateway'
+  NODE_VERSION: '18.x'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ env.NODE_VERSION }}
+
+    - name: Install dependencies
+      run: |
+        cd ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        npm install --production
+
+    - name: Deploy to Azure Functions
+      uses: Azure/functions-action@v1
+      with:
+        app-name: ${{ env.AZURE_FUNCTIONAPP_NAME }}
+        package: ${{ env.AZURE_FUNCTIONAPP_PACKAGE_PATH }}
+        publish-profile: ${{ secrets.AZURE_FUNCTIONAPP_PUBLISH_PROFILE }}
+
+    - name: Verify deployment
+      run: |
+        echo "✅ Azure Functions deployment completed!"
+        echo "Auth Gateway URL: https://${{ env.AZURE_FUNCTIONAPP_NAME }}.azurewebsites.net"

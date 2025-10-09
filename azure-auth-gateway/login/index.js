@@ -4,18 +4,28 @@ const { getCorsHeaders } = require('../shared/cors');
 const { v4: uuidv4 } = require('uuid');
 
 module.exports = async function (context, req) {
-    context.log('Login endpoint called');
-    
-    // Set CORS headers
-    context.res = {
-        headers: getCorsHeaders(req)
-    };
-    
+    context.log('Login endpoint called - Method:', req.method);
+    context.log('Request Origin:', req.headers.origin);
+
+    // Get CORS headers
+    const corsHeaders = getCorsHeaders(req);
+    context.log('CORS Headers to set:', JSON.stringify(corsHeaders));
+
     // Handle preflight
     if (req.method === 'OPTIONS') {
-        context.res.status = 204;
+        context.log('Handling OPTIONS preflight request');
+        context.res = {
+            status: 200,  // Try 200 instead of 204
+            headers: corsHeaders,
+            body: 'OK'
+        };
         return;
     }
+
+    // Set CORS headers for regular requests
+    context.res = {
+        headers: corsHeaders
+    };
     
     try {
         const { username, password, database } = req.body;

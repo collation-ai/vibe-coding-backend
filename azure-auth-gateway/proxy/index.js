@@ -5,17 +5,25 @@ const { getCorsHeaders } = require('../shared/cors');
 
 module.exports = async function (context, req) {
     context.log('Proxy endpoint called:', req.method, req.params.path);
-    
-    // Set CORS headers
-    context.res = {
-        headers: getCorsHeaders(req)
-    };
-    
+
+    // Get CORS headers
+    const corsHeaders = getCorsHeaders(req);
+
     // Handle preflight
     if (req.method === 'OPTIONS') {
-        context.res.status = 204;
+        context.res = {
+            status: 204,
+            headers: corsHeaders,
+            body: null
+        };
+        context.done();
         return;
     }
+
+    // Set CORS headers for regular requests
+    context.res = {
+        headers: corsHeaders
+    };
     
     let userId = null;
     

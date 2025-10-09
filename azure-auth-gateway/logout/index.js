@@ -1,24 +1,28 @@
 const { deleteSession } = require('../shared/sessions');
 const { logApiCall } = require('../shared/database');
+const { getCorsHeaders } = require('../shared/cors');
 
 module.exports = async function (context, req) {
     context.log('Logout endpoint called');
-    
-    // Set CORS headers
-    context.res = {
-        headers: {
-            'Access-Control-Allow-Origin': '*',
-            'Access-Control-Allow-Methods': 'POST, OPTIONS',
-            'Access-Control-Allow-Headers': 'Content-Type',
-            'Access-Control-Allow-Credentials': 'true'
-        }
-    };
-    
+
+    // Get CORS headers
+    const corsHeaders = getCorsHeaders(req);
+
     // Handle preflight
     if (req.method === 'OPTIONS') {
-        context.res.status = 204;
+        context.res = {
+            status: 204,
+            headers: corsHeaders,
+            body: null
+        };
+        context.done();
         return;
     }
+
+    // Set CORS headers for regular requests
+    context.res = {
+        headers: corsHeaders
+    };
     
     try {
         // Get session from cookie
